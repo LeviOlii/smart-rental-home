@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id         Int        @id @default(autoincrement())
+  name       String
+  email      String     @unique
+  password   String
+  createdAt  DateTime   @default(now())
+
+  properties Property[]
+}
+
+model Property {
+  id        Int       @id @default(autoincrement())
+  name      String
+  address   String?
+  createdAt DateTime  @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  devices Device[]
+}
+
+model Device {
+  id         Int       @id @default(autoincrement())
+  name       String
+  type       String    // ex: "disjuntor", "sensor"
+  topic      String    @unique // MQTT topic
+  createdAt  DateTime  @default(now())
+  isActive   Boolean   @default(false)
+  lastSeen   DateTime?
+
+  propertyId Int
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  readings DeviceReading[]
+}
+
+model DeviceReading {
+  id        BigInt    @id @default(autoincrement())
+  value     Float
+  createdAt DateTime  @default(now())
+
+  deviceId Int
+  device   Device @relation(fields: [deviceId], references: [id])
+
+  // 🔥 índice essencial pra performance
+  @@index([deviceId, createdAt])
+}
