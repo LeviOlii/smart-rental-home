@@ -53,7 +53,16 @@ export type StaySessionDevice = $Result.DefaultSelection<Prisma.$StaySessionDevi
  * Enums
  */
 export namespace $Enums {
-  export const SessionStatus: {
+  export const PropertyStatus: {
+  AVAILABLE: 'AVAILABLE',
+  OCCUPIED: 'OCCUPIED',
+  INACTIVE: 'INACTIVE'
+};
+
+export type PropertyStatus = (typeof PropertyStatus)[keyof typeof PropertyStatus]
+
+
+export const SessionStatus: {
   SCHEDULED: 'SCHEDULED',
   ACTIVE: 'ACTIVE',
   FINISHED: 'FINISHED',
@@ -63,6 +72,10 @@ export namespace $Enums {
 export type SessionStatus = (typeof SessionStatus)[keyof typeof SessionStatus]
 
 }
+
+export type PropertyStatus = $Enums.PropertyStatus
+
+export const PropertyStatus: typeof $Enums.PropertyStatus
 
 export type SessionStatus = $Enums.SessionStatus
 
@@ -2747,6 +2760,7 @@ export namespace Prisma {
     id: number | null
     name: string | null
     address: string | null
+    status: $Enums.PropertyStatus | null
     createdAt: Date | null
     userId: number | null
   }
@@ -2755,6 +2769,7 @@ export namespace Prisma {
     id: number | null
     name: string | null
     address: string | null
+    status: $Enums.PropertyStatus | null
     createdAt: Date | null
     userId: number | null
   }
@@ -2763,6 +2778,7 @@ export namespace Prisma {
     id: number
     name: number
     address: number
+    status: number
     createdAt: number
     userId: number
     _all: number
@@ -2783,6 +2799,7 @@ export namespace Prisma {
     id?: true
     name?: true
     address?: true
+    status?: true
     createdAt?: true
     userId?: true
   }
@@ -2791,6 +2808,7 @@ export namespace Prisma {
     id?: true
     name?: true
     address?: true
+    status?: true
     createdAt?: true
     userId?: true
   }
@@ -2799,6 +2817,7 @@ export namespace Prisma {
     id?: true
     name?: true
     address?: true
+    status?: true
     createdAt?: true
     userId?: true
     _all?: true
@@ -2894,6 +2913,7 @@ export namespace Prisma {
     id: number
     name: string
     address: string | null
+    status: $Enums.PropertyStatus
     createdAt: Date
     userId: number
     _count: PropertyCountAggregateOutputType | null
@@ -2921,6 +2941,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     address?: boolean
+    status?: boolean
     createdAt?: boolean
     userId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -2934,6 +2955,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     address?: boolean
+    status?: boolean
     createdAt?: boolean
     userId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -2943,6 +2965,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     address?: boolean
+    status?: boolean
     createdAt?: boolean
     userId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -2952,11 +2975,12 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     address?: boolean
+    status?: boolean
     createdAt?: boolean
     userId?: boolean
   }
 
-  export type PropertyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "address" | "createdAt" | "userId", ExtArgs["result"]["property"]>
+  export type PropertyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "address" | "status" | "createdAt" | "userId", ExtArgs["result"]["property"]>
   export type PropertyInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     devices?: boolean | Property$devicesArgs<ExtArgs>
@@ -2983,6 +3007,7 @@ export namespace Prisma {
       id: number
       name: string
       address: string | null
+      status: $Enums.PropertyStatus
       createdAt: Date
       userId: number
     }, ExtArgs["result"]["property"]>
@@ -3415,6 +3440,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Property", 'Int'>
     readonly name: FieldRef<"Property", 'String'>
     readonly address: FieldRef<"Property", 'String'>
+    readonly status: FieldRef<"Property", 'PropertyStatus'>
     readonly createdAt: FieldRef<"Property", 'DateTime'>
     readonly userId: FieldRef<"Property", 'Int'>
   }
@@ -9876,6 +9902,7 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     address: 'address',
+    status: 'status',
     createdAt: 'createdAt',
     userId: 'userId'
   };
@@ -10027,6 +10054,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'PropertyStatus'
+   */
+  export type EnumPropertyStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PropertyStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PropertyStatus[]'
+   */
+  export type ListEnumPropertyStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PropertyStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -10142,6 +10183,7 @@ export namespace Prisma {
     id?: IntFilter<"Property"> | number
     name?: StringFilter<"Property"> | string
     address?: StringNullableFilter<"Property"> | string | null
+    status?: EnumPropertyStatusFilter<"Property"> | $Enums.PropertyStatus
     createdAt?: DateTimeFilter<"Property"> | Date | string
     userId?: IntFilter<"Property"> | number
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -10154,6 +10196,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     address?: SortOrderInput | SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     userId?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -10169,6 +10212,7 @@ export namespace Prisma {
     NOT?: PropertyWhereInput | PropertyWhereInput[]
     name?: StringFilter<"Property"> | string
     address?: StringNullableFilter<"Property"> | string | null
+    status?: EnumPropertyStatusFilter<"Property"> | $Enums.PropertyStatus
     createdAt?: DateTimeFilter<"Property"> | Date | string
     userId?: IntFilter<"Property"> | number
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -10181,6 +10225,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     address?: SortOrderInput | SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     userId?: SortOrder
     _count?: PropertyCountOrderByAggregateInput
@@ -10197,6 +10242,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"Property"> | number
     name?: StringWithAggregatesFilter<"Property"> | string
     address?: StringNullableWithAggregatesFilter<"Property"> | string | null
+    status?: EnumPropertyStatusWithAggregatesFilter<"Property"> | $Enums.PropertyStatus
     createdAt?: DateTimeWithAggregatesFilter<"Property"> | Date | string
     userId?: IntWithAggregatesFilter<"Property"> | number
   }
@@ -10650,6 +10696,7 @@ export namespace Prisma {
   export type PropertyCreateInput = {
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     user: UserCreateNestedOneWithoutPropertiesInput
     devices?: DeviceCreateNestedManyWithoutPropertyInput
@@ -10661,6 +10708,7 @@ export namespace Prisma {
     id?: number
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     userId: number
     devices?: DeviceUncheckedCreateNestedManyWithoutPropertyInput
@@ -10671,6 +10719,7 @@ export namespace Prisma {
   export type PropertyUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutPropertiesNestedInput
     devices?: DeviceUpdateManyWithoutPropertyNestedInput
@@ -10682,6 +10731,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
     devices?: DeviceUncheckedUpdateManyWithoutPropertyNestedInput
@@ -10693,6 +10743,7 @@ export namespace Prisma {
     id?: number
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     userId: number
   }
@@ -10700,6 +10751,7 @@ export namespace Prisma {
   export type PropertyUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10707,6 +10759,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
   }
@@ -11249,6 +11302,13 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type EnumPropertyStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PropertyStatus | EnumPropertyStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPropertyStatusFilter<$PrismaModel> | $Enums.PropertyStatus
+  }
+
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
@@ -11293,6 +11353,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     address?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     userId?: SortOrder
   }
@@ -11306,6 +11367,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     address?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     userId?: SortOrder
   }
@@ -11314,6 +11376,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     address?: SortOrder
+    status?: SortOrder
     createdAt?: SortOrder
     userId?: SortOrder
   }
@@ -11339,6 +11402,16 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type EnumPropertyStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PropertyStatus | EnumPropertyStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPropertyStatusWithAggregatesFilter<$PrismaModel> | $Enums.PropertyStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPropertyStatusFilter<$PrismaModel>
+    _max?: NestedEnumPropertyStatusFilter<$PrismaModel>
   }
 
   export type BoolFilter<$PrismaModel = never> = {
@@ -11910,6 +11983,10 @@ export namespace Prisma {
     set?: string | null
   }
 
+  export type EnumPropertyStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PropertyStatus
+  }
+
   export type UserUpdateOneRequiredWithoutPropertiesNestedInput = {
     create?: XOR<UserCreateWithoutPropertiesInput, UserUncheckedCreateWithoutPropertiesInput>
     connectOrCreate?: UserCreateOrConnectWithoutPropertiesInput
@@ -12422,6 +12499,13 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type NestedEnumPropertyStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PropertyStatus | EnumPropertyStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPropertyStatusFilter<$PrismaModel> | $Enums.PropertyStatus
+  }
+
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -12448,6 +12532,16 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedEnumPropertyStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PropertyStatus | EnumPropertyStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PropertyStatus[] | ListEnumPropertyStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPropertyStatusWithAggregatesFilter<$PrismaModel> | $Enums.PropertyStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPropertyStatusFilter<$PrismaModel>
+    _max?: NestedEnumPropertyStatusFilter<$PrismaModel>
   }
 
   export type NestedBoolFilter<$PrismaModel = never> = {
@@ -12594,6 +12688,7 @@ export namespace Prisma {
   export type PropertyCreateWithoutUserInput = {
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     devices?: DeviceCreateNestedManyWithoutPropertyInput
     sessions?: StaySessionCreateNestedManyWithoutPropertyInput
@@ -12604,6 +12699,7 @@ export namespace Prisma {
     id?: number
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     devices?: DeviceUncheckedCreateNestedManyWithoutPropertyInput
     sessions?: StaySessionUncheckedCreateNestedManyWithoutPropertyInput
@@ -12643,6 +12739,7 @@ export namespace Prisma {
     id?: IntFilter<"Property"> | number
     name?: StringFilter<"Property"> | string
     address?: StringNullableFilter<"Property"> | string | null
+    status?: EnumPropertyStatusFilter<"Property"> | $Enums.PropertyStatus
     createdAt?: DateTimeFilter<"Property"> | Date | string
     userId?: IntFilter<"Property"> | number
   }
@@ -12911,6 +13008,7 @@ export namespace Prisma {
   export type PropertyCreateWithoutDevicesInput = {
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     user: UserCreateNestedOneWithoutPropertiesInput
     sessions?: StaySessionCreateNestedManyWithoutPropertyInput
@@ -12921,6 +13019,7 @@ export namespace Prisma {
     id?: number
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     userId: number
     sessions?: StaySessionUncheckedCreateNestedManyWithoutPropertyInput
@@ -12989,6 +13088,7 @@ export namespace Prisma {
   export type PropertyUpdateWithoutDevicesInput = {
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutPropertiesNestedInput
     sessions?: StaySessionUpdateManyWithoutPropertyNestedInput
@@ -12999,6 +13099,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
     sessions?: StaySessionUncheckedUpdateManyWithoutPropertyNestedInput
@@ -13126,6 +13227,7 @@ export namespace Prisma {
   export type PropertyCreateWithoutPackagesInput = {
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     user: UserCreateNestedOneWithoutPropertiesInput
     devices?: DeviceCreateNestedManyWithoutPropertyInput
@@ -13136,6 +13238,7 @@ export namespace Prisma {
     id?: number
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     userId: number
     devices?: DeviceUncheckedCreateNestedManyWithoutPropertyInput
@@ -13206,6 +13309,7 @@ export namespace Prisma {
   export type PropertyUpdateWithoutPackagesInput = {
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutPropertiesNestedInput
     devices?: DeviceUpdateManyWithoutPropertyNestedInput
@@ -13216,6 +13320,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
     devices?: DeviceUncheckedUpdateManyWithoutPropertyNestedInput
@@ -13241,6 +13346,7 @@ export namespace Prisma {
   export type PropertyCreateWithoutSessionsInput = {
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     user: UserCreateNestedOneWithoutPropertiesInput
     devices?: DeviceCreateNestedManyWithoutPropertyInput
@@ -13251,6 +13357,7 @@ export namespace Prisma {
     id?: number
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
     userId: number
     devices?: DeviceUncheckedCreateNestedManyWithoutPropertyInput
@@ -13327,6 +13434,7 @@ export namespace Prisma {
   export type PropertyUpdateWithoutSessionsInput = {
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutPropertiesNestedInput
     devices?: DeviceUpdateManyWithoutPropertyNestedInput
@@ -13337,6 +13445,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
     devices?: DeviceUncheckedUpdateManyWithoutPropertyNestedInput
@@ -13551,12 +13660,14 @@ export namespace Prisma {
     id?: number
     name: string
     address?: string | null
+    status?: $Enums.PropertyStatus
     createdAt?: Date | string
   }
 
   export type PropertyUpdateWithoutUserInput = {
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     devices?: DeviceUpdateManyWithoutPropertyNestedInput
     sessions?: StaySessionUpdateManyWithoutPropertyNestedInput
@@ -13567,6 +13678,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     devices?: DeviceUncheckedUpdateManyWithoutPropertyNestedInput
     sessions?: StaySessionUncheckedUpdateManyWithoutPropertyNestedInput
@@ -13577,6 +13689,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     address?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPropertyStatusFieldUpdateOperationsInput | $Enums.PropertyStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

@@ -4,7 +4,7 @@ import { DevicesService } from './devices.service';
 
 /**
  * DevicesModule — gerencia os dispositivos IoT (ESP32) de cada propriedade.
- * Expõe DevicesService para uso no MqttModule e RealtimeModule.
+ * Expõe DevicesService para uso no MqttModule e StaySessionsModule.
  */
 @Module({
   controllers: [DevicesController],

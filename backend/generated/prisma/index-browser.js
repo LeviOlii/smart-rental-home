@@ -132,6 +132,7 @@ exports.Prisma.PropertyScalarFieldEnum = {
   id: 'id',
   name: 'name',
   address: 'address',
+  status: 'status',
   createdAt: 'createdAt',
   userId: 'userId'
 };
@@ -207,6 +208,12 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.PropertyStatus = exports.$Enums.PropertyStatus = {
+  AVAILABLE: 'AVAILABLE',
+  OCCUPIED: 'OCCUPIED',
+  INACTIVE: 'INACTIVE'
+};
+
 exports.SessionStatus = exports.$Enums.SessionStatus = {
   SCHEDULED: 'SCHEDULED',
   ACTIVE: 'ACTIVE',

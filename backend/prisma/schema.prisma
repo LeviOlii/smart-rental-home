@@ -5,7 +5,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -23,18 +22,24 @@ model User {
 }
 
 model Property {
-  id        Int      @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   name      String
   address   String?
-  createdAt DateTime @default(now())
+  status    PropertyStatus @default(AVAILABLE)
+  createdAt DateTime       @default(now())
 
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
-  devices Device[]
-
+  devices  Device[]
   sessions StaySession[]
   packages RentalPackage[]
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  OCCUPIED
+  INACTIVE
 }
 
 model Device {

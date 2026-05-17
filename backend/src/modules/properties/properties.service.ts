@@ -1,18 +1,88 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreatePropertyDto } from './dto/create-property.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
 
 /**
- * PropertiesService — acesso ao banco de dados para propriedades.
- * TODO: injetar prisma (src/lib/prisma.ts) e implementar queries reais.
+ * PropertiesService — lógica de negócio e acesso ao banco para propriedades.
+ * O status da propriedade (AVAILABLE/OCCUPIED/INACTIVE) é atualizado automaticamente
+ * pelo StaySessionsService ao iniciar/finalizar uma sessão de estadia.
  */
 @Injectable()
 export class PropertiesService {
-  async findAll() {
-    // TODO: return await prisma.property.findMany({ where: { userId } });
-    return [];
+  constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Lista todas as propriedades de um usuário, incluindo dispositivos e sessão ativa.
+   */
+  findAll(userId: number) {
+    return this.prisma.property.findMany({
+      where: { userId },
+      include: {
+        devices: true,
+        sessions: {
+          where: { status: 'ACTIVE' },
+          take: 1,
+        },
+        _count: { select: { devices: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async findOne(id: number) {
-    // TODO: return await prisma.property.findUnique({ where: { id }, include: { devices: true } });
-    return null;
+  /**
+   * Retorna uma propriedade específica com dispositivos, pacotes e sessões.
+   */
+  async findOne(id: number, userId: number) {
+    const property = await this.prisma.property.findFirst({
+      where: { id, userId },
+      include: {
+        devices: {
+          include: {
+            readings: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+        packages: true,
+        sessions: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    });
+
+    if (!property)
+      throw new NotFoundException(`Propriedade ${id} não encontrada.`);
+    return property;
+  }
+
+  /**
+   * Cria uma nova propriedade vinculada ao usuário.
+   */
+  create(userId: number, dto: CreatePropertyDto) {
+    return this.prisma.property.create({
+      data: { ...dto, userId },
+    });
+  }
+
+  /**
+   * Atualiza nome, endereço ou status de uma propriedade.
+   */
+  async update(id: number, userId: number, dto: UpdatePropertyDto) {
+    await this.findOne(id, userId); // garante que existe e pertence ao usuário
+    return this.prisma.property.update({
+      where: { id },
+      data: dto,
+    });
+  }
+
+  /**
+   * Remove uma propriedade (e em cascata, seus dispositivos e sessões via FK do banco).
+   */
+  async remove(id: number, userId: number) {
+    await this.findOne(id, userId);
+    return this.prisma.property.delete({ where: { id } });
   }
 }
