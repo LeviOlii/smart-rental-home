@@ -2,8 +2,10 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MqttService } from '../mqtt/mqtt.service';
 import { CreateStaySessionDto } from './dto/create-stay-session.dto';
 
 /**
@@ -16,7 +18,10 @@ import { CreateStaySessionDto } from './dto/create-stay-session.dto';
  */
 @Injectable()
 export class StaySessionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mqtt: MqttService,
+  ) {}
 
   findAllByProperty(propertyId: number) {
     return this.prisma.staySession.findMany({
@@ -185,5 +190,88 @@ export class StaySessionsService {
   async remove(id: number) {
     await this.findOne(id);
     return this.prisma.staySession.delete({ where: { id } });
+  }
+
+  /**
+   * Inicia uma sessão de estadia diretamente a partir de um pacote (via QR Code).
+   *
+   * Fluxo:
+   *   1. Busca o pacote e sua propriedade
+   *   2. Verifica se a propriedade está AVAILABLE
+   *   3. Cria StaySession com status ACTIVE imediatamente
+   *   4. Vincula dispositivos da propriedade filtrados pelas allowedDeviceCategories do pacote
+   *   5. Muda Property.status → OCCUPIED
+   *   6. Publica comandos MQTT para ligar os dispositivos permitidos
+   */
+  async startFromPackage(packageId: number) {
+    // 1. Busca pacote com propriedade e dispositivos
+    const pkg = await this.prisma.rentalPackage.findUnique({
+      where: { id: packageId },
+      include: {
+        property: {
+          include: { devices: true },
+        },
+      },
+    });
+
+    if (!pkg) throw new NotFoundException(`Pacote ${packageId} não encontrado.`);
+
+    const property = pkg.property;
+
+    // 2. Verifica disponibilidade
+    if (property.status !== 'AVAILABLE') {
+      throw new ConflictException(
+        `Propriedade "${property.name}" não está disponível (status: ${property.status}).`,
+      );
+    }
+
+    // 3. Filtra dispositivos pelas categorias permitidas pelo pacote
+    const allowedCategories = pkg.allowedDeviceCategories;
+    const allDevices = property.devices;
+
+    const allowedDevices =
+      allowedCategories.length > 0
+        ? allDevices.filter((d) => allowedCategories.includes(d.type))
+        : allDevices; // se vazio, libera tudo
+
+    const now = new Date();
+
+    // 4. Cria sessão + vínculos em transação
+    const session = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.staySession.create({
+        data: {
+          clientName: 'Cliente Teste',
+          propertyId: property.id,
+          packageId: pkg.id,
+          checkinAt: now,
+          checkoutAt: new Date(now.getTime() + (pkg.durationHours ?? 24) * 3600 * 1000),
+          startedAt: now,
+          status: 'ACTIVE',
+        },
+      });
+
+      // Cria vínculos: todos os dispositivos da propriedade, isAllowed conforme o pacote
+      await tx.staySessionDevice.createMany({
+        data: allDevices.map((device) => ({
+          sessionId: created.id,
+          deviceId: device.id,
+          isAllowed: allowedDevices.some((d) => d.id === device.id),
+        })),
+      });
+
+      await tx.property.update({
+        where: { id: property.id },
+        data: { status: 'OCCUPIED' },
+      });
+
+      return created;
+    });
+
+    // 5. Publica comandos MQTT para ligar dispositivos permitidos
+    for (const device of allowedDevices) {
+      await this.mqtt.publishCommand(property.id, device.id, 'ON');
+    }
+
+    return this.findOne(session.id);
   }
 }

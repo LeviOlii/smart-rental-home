@@ -62,16 +62,25 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </span>
         </div>
 
-        {/* Address */}
-        <div className="flex items-start gap-2 text-sm text-text-secondary">
-          <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-surface-400" />
+        {/* Address — links to Google Maps */}
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            `${property.address.street}, ${property.address.neighborhood}, ${property.address.city} - ${property.address.state}`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start gap-2 text-sm group/addr hover:text-brand-600 transition-colors duration-200"
+        >
+          <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-surface-400 group-hover/addr:text-brand-500 transition-colors duration-200" />
           <div>
-            <p className="font-medium text-surface-700">{property.address.street}</p>
+            <p className="font-medium text-surface-700 group-hover/addr:text-brand-700 transition-colors duration-200 underline-offset-2 group-hover/addr:underline">
+              {property.address.street}
+            </p>
             <p className="text-surface-500">
               {property.address.neighborhood} — {property.address.city}/{property.address.state}
             </p>
           </div>
-        </div>
+        </a>
 
         {/* Divider */}
         <div className="border-t border-surface-100" />

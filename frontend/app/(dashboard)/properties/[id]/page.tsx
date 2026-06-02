@@ -16,11 +16,14 @@ import {
   Lock,
   Radio,
   CircleOff,
+  QrCode,
 } from "lucide-react";
 import { mockProperties } from "@/data/mock-properties";
 import { mockDevices } from "@/data/mock-devices";
+import { mockPackages } from "@/data/mock-packages";
 import { cn, formatCurrencyBRL } from "@/lib/utils";
 import type { DeviceCategory, DeviceStatus } from "@/types/device";
+import { QRCodeCard } from "../../../components/properties/qr-code-card";
 
 // ─── Status config (property) ────────────────────────────────────────────────
 const propertyStatusConfig = {
@@ -169,6 +172,8 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
     "sensor",
     "other",
   ];
+
+  const propertyPackages = mockPackages.filter((p) => p.propertyId === property.id);
 
   return (
     <div className="flex h-full flex-col">
@@ -398,6 +403,29 @@ export default async function PropertyDetailPage({ params }: PropertyDetailPageP
             </div>
           )}
         </section>
+
+        {/* QR Code Packages section — only for available properties */}
+        {property.status === "available" && propertyPackages.length > 0 && (
+          <section>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <QrCode className="h-5 w-5 text-brand-500" />
+                <h2 className="text-base font-bold text-text-primary">Pacotes QR Code</h2>
+              </div>
+              <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-600 border border-brand-100">
+                {propertyPackages.length} pacote{propertyPackages.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            <p className="mb-4 text-sm text-surface-500">
+              Gere os QR Codes para esta propriedade. O cliente escaneia e confirma o pagamento para iniciar a estadia automaticamente.
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {propertyPackages.map((pkg) => (
+                <QRCodeCard key={pkg.id} pkg={pkg} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

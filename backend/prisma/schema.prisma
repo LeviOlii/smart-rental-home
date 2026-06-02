@@ -92,6 +92,10 @@ model RentalPackage {
   // controle de dispositivos
   maxDevicesActive Int?
 
+  // categorias de dispositivos liberados por este pacote
+  // ex: ["circuit_breaker", "air_conditioner", "water_heater"]
+  allowedDeviceCategories String[]
+
   createdAt DateTime @default(now())
 
   propertyId Int
@@ -99,6 +103,7 @@ model RentalPackage {
 
   sessions StaySession[]
 }
+
 
 //
 //  NOVO: SESSÃO DE ESTADIA

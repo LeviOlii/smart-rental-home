@@ -13,4 +13,11 @@ export class CreateRentalPackageDto {
 
   /** Limite de dispositivos ativos simultaneamente */
   maxDevicesActive?: number;
+
+  /**
+   * Categorias de dispositivos liberadas por este pacote.
+   * Ex: ["circuit_breaker"] = Básico, + ["air_conditioner"] = Plus, + ["water_heater"] = Gold
+   */
+  allowedDeviceCategories?: string[];
 }
+
