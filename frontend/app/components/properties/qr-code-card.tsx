@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Link2, Check, Package, Zap, Clock } from "lucide-react";
-import type { RentalPackage, DeviceCategory } from "@/types/rental-package";
-import { cn, formatCurrencyBRL } from "@/lib/utils";
+import { Download, Link2, Check, Zap } from "lucide-react";
+import type { RentalPackage } from "@/types/rental-package";
+import { cn } from "@/lib/utils";
 
 // ─── Config visual por nome de pacote ────────────────────────────────────────
 const packageVisualConfig: Record<
@@ -119,7 +119,7 @@ export function QRCodeCard({ pkg }: QRCodeCardProps) {
         <div className="text-right">
           <p className="text-xs text-white/70">por dia</p>
           <p className="text-xl font-bold text-white">
-            {formatCurrencyBRL(pkg.basePriceInCents)}
+            R$ {pkg.basePrice.toFixed(2).replace(".", ",")}
           </p>
         </div>
       </div>
@@ -140,10 +140,13 @@ export function QRCodeCard({ pkg }: QRCodeCardProps) {
           </div>
         </div>
 
-        {/* Descrição */}
-        <p className="text-center text-xs text-surface-500 leading-relaxed">
-          {pkg.description}
-        </p>
+        {/* Duração e franquia no topo */}
+        {pkg.durationHours && (
+          <p className="text-center text-xs text-surface-400">
+            {pkg.durationHours}h de estadia
+            {pkg.energyLimitKwh ? ` · ${pkg.energyLimitKwh} kWh de franquia` : ""}
+          </p>
+        )}
 
         {/* Dispositivos liberados */}
         <div className="space-y-1.5">
@@ -154,24 +157,13 @@ export function QRCodeCard({ pkg }: QRCodeCardProps) {
             {pkg.allowedDeviceCategories.map((cat) => (
               <li key={cat} className="flex items-center gap-2 text-xs text-surface-700">
                 <Zap className="h-3 w-3 flex-shrink-0 text-brand-400" />
-                {deviceCategoryLabels[cat]}
+                {deviceCategoryLabels[cat as keyof typeof deviceCategoryLabels] ?? cat}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Duração */}
-        {pkg.durationHours && (
-          <div className="flex items-center gap-2 text-xs text-surface-500">
-            <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-            <span>Duração: {pkg.durationHours}h</span>
-            {pkg.energyLimitKwh && (
-              <span className="ml-auto text-surface-400">
-                Franquia: {pkg.energyLimitKwh} kWh
-              </span>
-            )}
-          </div>
-        )}
+
 
         {/* Ações */}
         <div className="grid grid-cols-2 gap-2 pt-1">

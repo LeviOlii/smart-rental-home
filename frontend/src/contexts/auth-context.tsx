@@ -7,9 +7,10 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { apiLogin } from "@/lib/api";
 
 interface AuthenticatedUser {
-  id: string;
+  id: number;
   name: string;
   email: string;
   avatarInitials: string;
@@ -18,6 +19,8 @@ interface AuthenticatedUser {
 interface AuthContextValue {
   authenticatedUser: AuthenticatedUser | null;
   isAuthenticated: boolean;
+  /** ID numérico do usuário logado — usado nas chamadas à API */
+  userId: number | null;
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
 }
@@ -27,18 +30,6 @@ interface LoginResult {
   errorMessage?: string;
 }
 
-// Mock credentials — substituir por chamada real ao backend no futuro
-const MOCK_CREDENTIAL = {
-  email: "admin@smartrental.com",
-  password: "password123",
-  user: {
-    id: "user-001",
-    name: "João da Silva",
-    email: "admin@smartrental.com",
-    avatarInitials: "JS",
-  },
-};
-
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -47,22 +38,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string): Promise<LoginResult> => {
-      // Simula latência de rede
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      try {
+        const data = await apiLogin(email, password);
 
-      const credentialsAreValid =
-        email === MOCK_CREDENTIAL.email &&
-        password === MOCK_CREDENTIAL.password;
+        setAuthenticatedUser({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          avatarInitials: data.name
+            .split(" ")
+            .slice(0, 2)
+            .map((n) => n[0].toUpperCase())
+            .join(""),
+        });
 
-      if (!credentialsAreValid) {
-        return {
-          success: false,
-          errorMessage: "E-mail ou senha incorretos. Tente novamente.",
-        };
+        return { success: true };
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Erro ao fazer login.";
+        return { success: false, errorMessage: message };
       }
-
-      setAuthenticatedUser(MOCK_CREDENTIAL.user);
-      return { success: true };
     },
     []
   );
@@ -76,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         authenticatedUser,
         isAuthenticated: authenticatedUser !== null,
+        userId: authenticatedUser?.id ?? null,
         login,
         logout,
       }}

@@ -1,29 +1,29 @@
 import Link from "next/link";
-import { CheckCircle, Home, Wrench, MapPin, Cpu, DollarSign } from "lucide-react";
+import { CheckCircle, Home, Wrench, MapPin, Cpu, Activity } from "lucide-react";
 import type { Property } from "@/types/property";
-import { cn, formatCurrencyBRL } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface PropertyCardProps {
   property: Property;
 }
 
 const statusDisplayConfig = {
-  available: {
+  AVAILABLE: {
     label: "Disponível",
     icon: CheckCircle,
     className: "text-emerald-700 bg-emerald-50 border-emerald-200",
     iconClassName: "text-emerald-500",
     accentClassName: "bg-gradient-to-r from-emerald-400 to-emerald-600",
   },
-  rented: {
-    label: "Alugada",
+  OCCUPIED: {
+    label: "Ocupada",
     icon: Home,
     className: "text-brand-700 bg-brand-50 border-brand-200",
     iconClassName: "text-brand-500",
     accentClassName: "bg-gradient-to-r from-brand-400 to-brand-600",
   },
-  maintenance: {
-    label: "Manutenção",
+  INACTIVE: {
+    label: "Inativa",
     icon: Wrench,
     className: "text-amber-600 bg-amber-50 border-amber-200",
     iconClassName: "text-amber-500",
@@ -35,10 +35,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const statusConfig = statusDisplayConfig[property.status];
   const StatusIcon = statusConfig.icon;
 
+  const totalDevices = property._count.devices;
+  const activeDevices = property.devices.filter((d) => d.isActive).length;
+  const hasActiveSession = property.sessions.length > 0;
+
   const deviceOnlinePercentage =
-    property.deviceCount > 0
-      ? Math.round((property.activeDeviceCount / property.deviceCount) * 100)
-      : 0;
+    totalDevices > 0 ? Math.round((activeDevices / totalDevices) * 100) : 0;
 
   return (
     <article className="group flex flex-col rounded-2xl border border-surface-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-surface-200/60 hover:-translate-y-0.5 overflow-hidden">
@@ -62,25 +64,25 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </span>
         </div>
 
-        {/* Address — links to Google Maps */}
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            `${property.address.street}, ${property.address.neighborhood}, ${property.address.city} - ${property.address.state}`
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-start gap-2 text-sm group/addr hover:text-brand-600 transition-colors duration-200"
-        >
-          <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-surface-400 group-hover/addr:text-brand-500 transition-colors duration-200" />
-          <div>
+        {/* Address */}
+        {property.address ? (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-2 text-sm group/addr hover:text-brand-600 transition-colors duration-200"
+          >
+            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-surface-400 group-hover/addr:text-brand-500 transition-colors duration-200" />
             <p className="font-medium text-surface-700 group-hover/addr:text-brand-700 transition-colors duration-200 underline-offset-2 group-hover/addr:underline">
-              {property.address.street}
+              {property.address}
             </p>
-            <p className="text-surface-500">
-              {property.address.neighborhood} — {property.address.city}/{property.address.state}
-            </p>
-          </div>
-        </a>
+          </a>
+        ) : (
+          <p className="flex items-center gap-2 text-sm text-surface-400">
+            <MapPin className="h-4 w-4 flex-shrink-0" />
+            Endereço não informado
+          </p>
+        )}
 
         {/* Divider */}
         <div className="border-t border-surface-100" />
@@ -95,32 +97,34 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div>
               <p className="text-xs text-surface-500">Dispositivos</p>
               <p className="text-sm font-semibold text-text-primary">
-                {property.activeDeviceCount}{" "}
+                {activeDevices}{" "}
                 <span className="font-normal text-surface-400">
-                  / {property.deviceCount}
+                  / {totalDevices}
                 </span>
               </p>
             </div>
           </div>
 
-          {/* Monthly rent */}
+          {/* Session status */}
           <div className="flex items-center gap-2 rounded-xl bg-surface-50 p-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
-              <DollarSign className="h-4 w-4 text-brand-600" />
+              <Activity className="h-4 w-4 text-brand-600" />
             </div>
             <div>
-              <p className="text-xs text-surface-500">Aluguel/mês</p>
+              <p className="text-xs text-surface-500">Estadia</p>
               <p className="text-sm font-semibold text-text-primary">
-                {property.monthlyRentValueInCents > 0
-                  ? formatCurrencyBRL(property.monthlyRentValueInCents)
-                  : "—"}
+                {hasActiveSession ? (
+                  <span className="text-brand-600">Ativa</span>
+                ) : (
+                  <span className="text-surface-400">Sem estadia</span>
+                )}
               </p>
             </div>
           </div>
         </div>
 
         {/* Device health bar */}
-        {property.deviceCount > 0 && (
+        {totalDevices > 0 && (
           <div>
             <div className="mb-1.5 flex items-center justify-between text-xs">
               <span className="text-surface-500">Dispositivos online</span>
@@ -153,17 +157,17 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </div>
         )}
 
-        {/* Tenant name */}
-        {property.tenantName && (
+        {/* Active session tenant */}
+        {hasActiveSession && property.sessions[0].clientName && (
           <p className="text-xs text-surface-500">
-            Inquilino:{" "}
+            Hóspede:{" "}
             <span className="font-medium text-surface-700">
-              {property.tenantName}
+              {property.sessions[0].clientName}
             </span>
           </p>
         )}
 
-        {/* Action button → links to detail page */}
+        {/* Action button */}
         <Link
           href={`/properties/${property.id}`}
           className="mt-1 flex w-full items-center justify-center rounded-xl border border-surface-200 bg-surface-50 py-2.5 text-sm font-medium text-surface-600 transition-all duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"

@@ -1,17 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Home, Search, SlidersHorizontal } from "lucide-react";
-import { mockProperties } from "@/data/mock-properties";
+import { useAuth } from "@/contexts/auth-context";
+import { getProperties } from "@/lib/api";
+import type { Property } from "@/types/property";
 import { PropertyCard } from "@/app/components/properties/property-card";
 
-const availableCount = mockProperties.filter((p) => p.status === "available").length;
-const rentedCount = mockProperties.filter((p) => p.status === "rented").length;
-const maintenanceCount = mockProperties.filter((p) => p.status === "maintenance").length;
-
-const totalDeviceCount = mockProperties.reduce(
-  (accumulator, property) => accumulator + property.deviceCount,
-  0
-);
-
 export default function PropertiesPage() {
+  const { userId } = useAuth();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    setIsLoading(true);
+    getProperties(userId)
+      .then(setProperties)
+      .catch((err: unknown) =>
+        setError(err instanceof Error ? err.message : "Erro ao carregar propriedades.")
+      )
+      .finally(() => setIsLoading(false));
+  }, [userId]);
+
+  const availableCount = properties.filter((p) => p.status === "AVAILABLE").length;
+  const rentedCount = properties.filter((p) => p.status === "OCCUPIED").length;
+  const maintenanceCount = properties.filter((p) => p.status === "INACTIVE").length;
+  const totalDeviceCount = properties.reduce((acc, p) => acc + p._count.devices, 0);
+
   return (
     <div className="flex h-full flex-col">
       {/* Page Header */}
@@ -27,12 +45,11 @@ export default function PropertiesPage() {
                   Minhas Propriedades
                 </h1>
                 <p className="mt-0.5 text-sm text-text-secondary">
-                  {mockProperties.length} propriedades · {rentedCount} alugadas · {totalDeviceCount} dispositivos
+                  {properties.length} propriedades · {rentedCount} ocupadas · {totalDeviceCount} dispositivos
                 </p>
               </div>
             </div>
 
-            {/* Future: Add property button */}
             <button className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-brand-500/20 transition-all duration-200 hover:bg-brand-600 hover:shadow-brand-600/30">
               + Nova Propriedade
             </button>
@@ -68,13 +85,13 @@ export default function PropertiesPage() {
               dotClassName: "bg-emerald-500",
             },
             {
-              label: "Alugadas",
+              label: "Ocupadas",
               value: rentedCount,
               colorClassName: "text-brand-600",
               dotClassName: "bg-brand-500",
             },
             {
-              label: "Em manutenção",
+              label: "Inativas",
               value: maintenanceCount,
               colorClassName: "text-amber-600",
               dotClassName: "bg-amber-400",
@@ -90,18 +107,39 @@ export default function PropertiesPage() {
           ))}
 
           <div className="ml-auto text-xs text-surface-400">
-            Última atualização: agora
+            {isLoading ? "Carregando..." : "Dados ao vivo"}
           </div>
         </div>
       </div>
 
-      {/* Properties grid */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {mockProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-52 rounded-2xl border border-surface-200 bg-white animate-pulse"
+              />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 py-16 gap-3">
+            <p className="text-sm font-medium text-red-700">{error}</p>
+            <p className="text-xs text-red-500">Verifique se o backend está rodando em {process.env.NEXT_PUBLIC_API_URL}</p>
+          </div>
+        ) : properties.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-300 bg-white py-16 gap-3">
+            <Home className="h-10 w-10 text-surface-300" />
+            <p className="text-sm text-surface-500">Nenhuma propriedade cadastrada</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {properties.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
