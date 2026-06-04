@@ -19,6 +19,6 @@ const rootEnvPath = path.resolve(__dirname, '..', '..', '..', '..', '.env');
 const result = dotenv.config({ path: rootEnvPath });
 
 if (result.error) {
-  // Fallback: tenta .env no cwd (caso rode diretamente de backend/)
-  dotenv.config();
+    // Fallback: tenta .env no cwd (caso rode diretamente de backend/)
+    dotenv.config();
 }
