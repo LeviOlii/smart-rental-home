@@ -1,14 +1,16 @@
 {
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "^7.7.0",
-    "dotenv": "^17.4.2",
-    "pg": "^8.20.0"
+  "name": "smart-rental-home",
+  "version": "1.0.0",
+  "description": "Monorepo — Smart Rental Home (frontend: Next.js | backend: NestJS)",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run start:dev",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "install:all": "cd frontend && npm install && cd ../backend && npm install"
   },
-  "devDependencies": {
-    "@types/pg": "^8.20.0",
-    "prisma": "^7.7.0"
-  },
-  
-  "type": "module"
+  "engines": {
+    "node": ">=18"
+  }
 }
