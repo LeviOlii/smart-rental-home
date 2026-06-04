@@ -4,103 +4,50 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  ArrowLeft,
-  MapPin,
-  Cpu,
-  CheckCircle,
-  Home,
-  Wrench,
-  Zap,
-  ZapOff,
-  Thermometer,
-  Lightbulb,
-  Lock,
-  Radio,
-  CircleOff,
-  QrCode,
-  Activity,
+  ArrowLeft, MapPin, Cpu, CheckCircle, Home, Wrench,
+  Zap, CircleOff, QrCode,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { getProperty, getPackages } from "@/lib/api";
 import type { Property } from "@/types/property";
-import type { PropertyDevice } from "@/types/property";
 import type { RentalPackage } from "@/types/rental-package";
 import { cn } from "@/lib/utils";
 import { QRCodeCard } from "../../../components/properties/qr-code-card";
+import { DeviceCard, EnergyChartSection } from "../../../components/properties/property-detail-components";
 
-// ─── Status config (property) ────────────────────────────────────────────────
-const propertyStatusConfig = {
-  AVAILABLE: {
-    label: "Disponível",
-    icon: CheckCircle,
-    className: "text-emerald-700 bg-emerald-50 border-emerald-200",
-    iconClassName: "text-emerald-500",
-  },
-  OCCUPIED: {
-    label: "Ocupada",
-    icon: Home,
-    className: "text-brand-700 bg-brand-50 border-brand-200",
-    iconClassName: "text-brand-500",
-  },
-  INACTIVE: {
-    label: "Inativa",
-    icon: Wrench,
-    className: "text-amber-600 bg-amber-50 border-amber-200",
-    iconClassName: "text-amber-500",
-  },
+// ─── Status config ────────────────────────────────────────────────────────────
+const statusConfig = {
+  AVAILABLE: { label: "Disponível", icon: CheckCircle, badge: "text-emerald-700 bg-emerald-50 border-emerald-200", icon_: "text-emerald-500" },
+  OCCUPIED:  { label: "Ocupada",    icon: Home,         badge: "text-brand-700 bg-brand-50 border-brand-200",     icon_: "text-brand-500" },
+  INACTIVE:  { label: "Inativa",    icon: Wrench,       badge: "text-amber-600 bg-amber-50 border-amber-200",     icon_: "text-amber-500" },
 } as const;
 
-// ─── Device type → visual config ─────────────────────────────────────────────
-const categoryConfig: Record<
-  string,
-  { label: string; icon: React.ElementType; bgClassName: string; iconClassName: string }
-> = {
-  circuit_breaker: {
-    label: "Disjuntor",
-    icon: Zap,
-    bgClassName: "bg-violet-100",
-    iconClassName: "text-violet-600",
-  },
-  air_conditioner: {
-    label: "Ar-condicionado",
-    icon: Thermometer,
-    bgClassName: "bg-sky-100",
-    iconClassName: "text-sky-600",
-  },
-  water_heater: {
-    label: "Chuveiro elétrico",
-    icon: Zap,
-    bgClassName: "bg-orange-100",
-    iconClassName: "text-orange-600",
-  },
-  lighting: {
-    label: "Iluminação",
-    icon: Lightbulb,
-    bgClassName: "bg-yellow-100",
-    iconClassName: "text-yellow-600",
-  },
-  smart_lock: {
-    label: "Fechadura smart",
-    icon: Lock,
-    bgClassName: "bg-indigo-100",
-    iconClassName: "text-indigo-600",
-  },
-  sensor: {
-    label: "Sensor",
-    icon: Radio,
-    bgClassName: "bg-teal-100",
-    iconClassName: "text-teal-600",
-  },
-  other: {
-    label: "Outro",
-    icon: Cpu,
-    bgClassName: "bg-surface-100",
-    iconClassName: "text-surface-500",
-  },
-};
-
-function getCategoryConfig(type: string) {
-  return categoryConfig[type] ?? categoryConfig["other"];
+// ─── Skeleton Loading ─────────────────────────────────────────────────────────
+function PageSkeleton() {
+  return (
+    <div className="flex h-full flex-col">
+      <header className="sticky top-0 z-10 border-b border-surface-200 bg-white/80 backdrop-blur-sm px-8 py-5">
+        <div className="flex items-center gap-4">
+          <Link href="/properties" className="flex h-9 w-9 items-center justify-center rounded-xl border border-surface-200 bg-surface-50 text-surface-500">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div className="h-5 w-48 animate-pulse rounded-lg bg-surface-200" />
+        </div>
+      </header>
+      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-32 animate-pulse rounded-2xl bg-surface-100" />
+          <div className="h-32 animate-pulse rounded-2xl bg-surface-100" />
+        </div>
+        <div className="h-80 animate-pulse rounded-2xl bg-surface-100" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-40 animate-pulse rounded-2xl bg-surface-100" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -117,137 +64,68 @@ export default function PropertyDetailPage() {
     if (!userId || !params.id) return;
     const id = parseInt(params.id, 10);
     if (isNaN(id)) {
-  setTimeout(() => {
-      setError("ID de propriedade inválido.");
-      setIsLoading(false);
-    }, 0);
-    return;
-  }
-
-    // Busca propriedade e pacotes em paralelo
-    Promise.all([
-      getProperty(id, userId),
-      getPackages(id),
-    ])
-      .then(([prop, pkgs]) => {
-        setProperty(prop);
-        setPackages(pkgs);
-      })
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Erro ao carregar propriedade.")
-      )
+      setTimeout(() => { setError("ID inválido."); setIsLoading(false); }, 0);
+      return;
+    }
+    Promise.all([getProperty(id, userId), getPackages(id)])
+      .then(([prop, pkgs]) => { setProperty(prop); setPackages(pkgs); })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Erro ao carregar."))
       .finally(() => setIsLoading(false));
   }, [userId, params.id]);
 
-  // ─── Loading ────────────────────────────────────────────────────────────────
-  if (isLoading) {
-    return (
-      <div className="flex h-full flex-col">
-        <header className="sticky top-0 z-10 border-b border-surface-200 bg-white/80 backdrop-blur-sm px-8 py-5">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/properties"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-surface-200 bg-surface-50 text-surface-500"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div className="h-6 w-48 animate-pulse rounded-lg bg-surface-200" />
-          </div>
-        </header>
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface-100" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <PageSkeleton />;
 
-  // ─── Erro ───────────────────────────────────────────────────────────────────
   if (error || !property) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
         <CircleOff className="h-12 w-12 text-surface-300" />
-        <h2 className="text-lg font-semibold text-text-primary">
-          {error ?? "Propriedade não encontrada"}
-        </h2>
-        <Link
-          href="/properties"
-          className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600"
-        >
-          <ArrowLeft className="h-4 w-4" /> Voltar para propriedades
+        <h2 className="text-lg font-semibold text-text-primary">{error ?? "Propriedade não encontrada"}</h2>
+        <Link href="/properties" className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600">
+          <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
       </div>
     );
   }
 
-  // ─── Dados calculados ────────────────────────────────────────────────────────
-  const propStatus = propertyStatusConfig[property.status];
-  const PropStatusIcon = propStatus.icon;
-
+  // ─── Calculated values ─────────────────────────────────────────────────────
+  const st = statusConfig[property.status];
+  const StatusIcon = st.icon;
   const devices = property.devices;
-  const onlineDevices = devices.filter((d) => d.isActive).length;
-  const totalPowerWatts = devices.reduce((acc, d) => acc + (d.powerWatts ?? 0), 0);
+  const onlineDevices = devices.filter(d => d.isActive);
+  const onlineCount = onlineDevices.length;
+  const totalPowerWatts = onlineDevices.reduce((acc, d) => acc + (d.powerWatts ?? 0), 0);
   const hasActiveSession = property.sessions.length > 0;
   const activeSession = property.sessions[0] ?? null;
 
-  // Agrupar por type
-  const groupedDevices = devices.reduce<Record<string, PropertyDevice[]>>(
-    (acc, device) => {
-      const key = device.type;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(device);
-      return acc;
-    },
-    {}
-  );
-
-  const categoryOrder: string[] = [
-    "circuit_breaker",
-    "air_conditioner",
-    "water_heater",
-    "lighting",
-    "smart_lock",
-    "sensor",
-    "other",
-  ];
-
-  // Ordena os tipos: primeiro os conhecidos na ordem, depois os desconhecidos
-  const sortedTypes = [
-    ...categoryOrder.filter((k) => groupedDevices[k]),
-    ...Object.keys(groupedDevices).filter((k) => !categoryOrder.includes(k)),
-  ];
+  // Power bar color
+  const powerLevel = totalPowerWatts > 4000 ? "red" : totalPowerWatts > 1500 ? "amber" : "emerald";
+  const powerBarColors = { red: "bg-red-500", amber: "bg-amber-500", emerald: "bg-emerald-500" };
+  const powerTextColors = { red: "text-red-600", amber: "text-amber-600", emerald: "text-text-primary" };
+  const powerIconBgs = { red: "bg-red-100", amber: "bg-amber-100", emerald: "bg-emerald-100" };
+  const powerIconColors = { red: "text-red-600", amber: "text-amber-600", emerald: "text-emerald-600" };
 
   return (
     <div className="flex h-full flex-col">
-      {/* Page Header */}
-      <header className="sticky top-0 z-10 border-b border-surface-200 bg-white/80 backdrop-blur-sm">
+      {/* ─── Header ──────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-10 border-b border-surface-200 bg-white/90 backdrop-blur-sm">
         <div className="px-8 py-5">
           <div className="flex items-center gap-4">
             <Link
               href="/properties"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-surface-200 bg-surface-50 text-surface-500 transition-all hover:border-surface-300 hover:bg-surface-100 hover:text-surface-700"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-surface-200 bg-surface-50 text-surface-500 transition-all hover:border-surface-300 hover:bg-surface-100"
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
-
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3">
-                <h1 className="text-lg font-bold text-text-primary leading-none truncate">
-                  {property.name}
-                </h1>
-                <span
-                  className={cn(
-                    "hidden sm:flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
-                    propStatus.className
-                  )}
-                >
-                  <PropStatusIcon className={cn("h-3 w-3", propStatus.iconClassName)} />
-                  {propStatus.label}
+                <h1 className="text-xl font-bold text-text-primary leading-none truncate">{property.name}</h1>
+                <span className={cn("hidden sm:flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", st.badge)}>
+                  <StatusIcon className={cn("h-3 w-3", st.icon_)} />
+                  {st.label}
                 </span>
               </div>
               {property.address && (
-                <p className="mt-0.5 text-sm text-text-secondary flex items-center gap-1">
+                <p className="mt-1 text-sm text-text-secondary flex items-center gap-1">
                   <MapPin className="h-3.5 w-3.5 shrink-0" />
                   {property.address}
                 </p>
@@ -257,83 +135,90 @@ export default function PropertyDetailPage() {
         </div>
       </header>
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+      {/* ─── Body ────────────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
 
-        {/* Info cards */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {/* Total devices */}
-          <div className="flex items-center gap-3 rounded-2xl border border-surface-200 bg-white p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
-              <Cpu className="h-5 w-5 text-brand-600" />
-            </div>
-            <div>
-              <p className="text-xs text-surface-500">Dispositivos</p>
-              <p className="text-xl font-bold text-text-primary">{devices.length}</p>
-            </div>
-          </div>
+        {/* BENTO TOP ROW */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
-          {/* Online */}
-          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
-              <Zap className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs text-emerald-600">Online</p>
-              <p className="text-xl font-bold text-emerald-700">{onlineDevices}</p>
-            </div>
-          </div>
-
-          {/* Power */}
-          <div className="flex items-center gap-3 rounded-2xl border border-surface-200 bg-white p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
-              <Zap className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xs text-surface-500">Consumo atual</p>
-              <p className="text-xl font-bold text-text-primary">
-                {totalPowerWatts >= 1000
-                  ? `${(totalPowerWatts / 1000).toFixed(1)} kW`
-                  : `${totalPowerWatts} W`}
+          {/* Card: Online Devices */}
+          <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-surface-400">
+                Dispositivos Online
               </p>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
+                <Cpu className="h-4 w-4 text-emerald-600" />
+              </div>
             </div>
+            <p className="text-5xl font-bold text-text-primary tabular-nums">
+              {onlineCount}
+              <span className="ml-1.5 text-lg font-normal text-surface-400">/ {devices.length}</span>
+            </p>
+            {/* Dot matrix — 1 dot per device */}
+            {devices.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {devices.map(d => (
+                  <div key={d.id} title={d.name} className="flex items-center gap-1.5">
+                    <span className={cn(
+                      "h-2.5 w-2.5 rounded-full transition-colors",
+                      d.isActive ? "bg-emerald-500" : "bg-surface-200"
+                    )} />
+                    <span className="text-xs text-surface-400 truncate max-w-20">{d.name.split(" ")[0]}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Session */}
-          <div className="flex items-center gap-3 rounded-2xl border border-surface-200 bg-white p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
-              <Activity className="h-5 w-5 text-brand-600" />
-            </div>
-            <div>
-              <p className="text-xs text-surface-500">Estadia</p>
-              <p className={cn("text-sm font-bold", hasActiveSession ? "text-brand-600" : "text-surface-400")}>
-                {hasActiveSession ? "Ativa" : "Nenhuma"}
+          {/* Card: Total Power */}
+          <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-surface-400">
+                Consumo Total Atual
               </p>
+              <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", powerIconBgs[powerLevel])}>
+                <Zap className={cn("h-4 w-4", powerIconColors[powerLevel])} />
+              </div>
+            </div>
+            <p className={cn("text-5xl font-bold tabular-nums", powerTextColors[powerLevel])}>
+              {totalPowerWatts >= 1000
+                ? (totalPowerWatts / 1000).toFixed(1)
+                : totalPowerWatts}
+              <span className="ml-1.5 text-lg font-normal text-surface-400">
+                {totalPowerWatts >= 1000 ? "kW" : "W"}
+              </span>
+            </p>
+            {/* Progress bar (max reference: 6kW) */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-1.5 text-xs text-surface-400">
+                <span>0 W</span>
+                <span>6 kW</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-surface-100 overflow-hidden">
+                <div
+                  className={cn("h-full rounded-full transition-all duration-700", powerBarColors[powerLevel])}
+                  style={{ width: `${Math.min((totalPowerWatts / 6000) * 100, 100)}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Active session info */}
-        {hasActiveSession && activeSession && (
-          <div className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4">
-            <Activity className="h-5 w-5 shrink-0 text-brand-500" />
-            <div>
-              <p className="text-sm font-medium text-brand-700">
-                Estadia em andamento — {activeSession.clientName}
-              </p>
-              <p className="text-xs text-brand-500">
-                Check-out previsto: {new Date(activeSession.checkoutAt).toLocaleString("pt-BR")}
-              </p>
-            </div>
-          </div>
-        )}
+        {/* ENERGY CHART SECTION */}
+        <EnergyChartSection
+          devices={devices}
+          activeSession={activeSession}
+          hasActiveSession={hasActiveSession}
+          totalPowerWatts={totalPowerWatts}
+        />
 
-        {/* Devices section */}
+        {/* DEVICE GRID */}
         <section>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-bold text-text-primary">Dispositivos cadastrados</h2>
+            <h2 className="text-base font-bold text-text-primary">Dispositivos</h2>
             <span className="rounded-full bg-surface-100 px-2.5 py-0.5 text-xs font-semibold text-surface-600">
-              {devices.length} total
+              {onlineCount} online · {devices.length} total
             </span>
           </div>
 
@@ -343,107 +228,15 @@ export default function PropertyDetailPage() {
               <p className="text-sm text-surface-500">Nenhum dispositivo cadastrado</p>
             </div>
           ) : (
-            <div className="space-y-6">
-              {sortedTypes.map((type) => {
-                const categoryDevices = groupedDevices[type];
-                if (!categoryDevices || categoryDevices.length === 0) return null;
-
-                const catConfig = getCategoryConfig(type);
-                const CatIcon = catConfig.icon;
-
-                return (
-                  <div key={type}>
-                    {/* Category header */}
-                    <div className="mb-3 flex items-center gap-2">
-                      <div
-                        className={cn(
-                          "flex h-7 w-7 items-center justify-center rounded-lg",
-                          catConfig.bgClassName
-                        )}
-                      >
-                        <CatIcon className={cn("h-4 w-4", catConfig.iconClassName)} />
-                      </div>
-                      <h3 className="text-sm font-semibold text-text-primary">
-                        {catConfig.label}
-                      </h3>
-                      <span className="text-xs text-surface-400">
-                        ({categoryDevices.length})
-                      </span>
-                    </div>
-
-                    {/* Device cards */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      {categoryDevices.map((device) => (
-                        <div
-                          key={device.id}
-                          className="group relative flex items-start gap-4 rounded-2xl border border-surface-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-                        >
-                          {/* Category icon */}
-                          <div
-                            className={cn(
-                              "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                              catConfig.bgClassName
-                            )}
-                          >
-                            <CatIcon className={cn("h-5 w-5", catConfig.iconClassName)} />
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            {/* Name + status badge */}
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm font-semibold text-text-primary leading-snug truncate">
-                                {device.name}
-                              </p>
-                              <span
-                                className={cn(
-                                  "flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-                                  device.isActive
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : "bg-surface-100 text-surface-500 border-surface-200"
-                                )}
-                              >
-                                {device.isActive ? (
-                                  <Zap className="h-3 w-3 text-emerald-500" />
-                                ) : (
-                                  <ZapOff className="h-3 w-3 text-surface-400" />
-                                )}
-                                {device.isActive ? "Online" : "Offline"}
-                              </span>
-                            </div>
-
-                            {/* Topic */}
-                            <p className="mt-1 text-xs text-surface-400 font-mono truncate">
-                              {device.topic}
-                            </p>
-
-                            {/* Power consumption */}
-                            {device.isActive && device.powerWatts && device.powerWatts > 0 && (
-                              <p className="mt-2 text-xs font-medium text-amber-600 flex items-center gap-1">
-                                <Zap className="h-3 w-3" />
-                                {device.powerWatts >= 1000
-                                  ? `${(device.powerWatts / 1000).toFixed(1)} kW`
-                                  : `${device.powerWatts} W`}
-                              </p>
-                            )}
-
-                            {/* Last seen */}
-                            {device.lastSeen && (
-                              <p className="mt-1 text-xs text-surface-400">
-                                Visto: {new Date(device.lastSeen).toLocaleString("pt-BR")}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              {devices.map(device => (
+                <DeviceCard key={device.id} device={device} />
+              ))}
             </div>
           )}
         </section>
 
-        {/* QR Code Packages section — only for AVAILABLE properties */}
+        {/* QR CODE PACKAGES — apenas para AVAILABLE */}
         {property.status === "AVAILABLE" && packages.length > 0 && (
           <section>
             <div className="mb-4 flex items-center justify-between">
@@ -459,12 +252,13 @@ export default function PropertyDetailPage() {
               Gere os QR Codes para esta propriedade. O cliente escaneia e confirma o pagamento para iniciar a estadia automaticamente.
             </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {packages.map((pkg) => (
+              {packages.map(pkg => (
                 <QRCodeCard key={pkg.id} pkg={pkg} />
               ))}
             </div>
           </section>
         )}
+
       </div>
     </div>
   );

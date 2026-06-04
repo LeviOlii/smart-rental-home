@@ -2,7 +2,7 @@
 // npm install --save-dev prisma dotenv
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), './.env') });
 import { defineConfig, env } from 'prisma/config';
 
 export default defineConfig({
