@@ -44,7 +44,7 @@ function ToggleSwitch({ isOn }: { isOn: boolean }) {
 }
 
 // ─── Device Card ─────────────────────────────────────────────────────────────
-export function DeviceCard({ device }: { device: PropertyDevice }) {
+export function DeviceCard({ device, onToggle }: { device: PropertyDevice & { telemetryDetails?: any }; onToggle?: (deviceId: number, action: string) => void }) {
   const [isOn, setIsOn] = useState(device.isActive);
   const cfg = getCatConfig(device.type);
   const Icon = cfg.icon;
@@ -74,7 +74,14 @@ export function DeviceCard({ device }: { device: PropertyDevice }) {
         <p className={cn("text-sm font-semibold leading-snug truncate", isOn ? "text-text-primary" : "text-surface-400")}>
           {device.name}
         </p>
-        <p className="mt-0.5 text-xs text-surface-400">{cfg.label}</p>
+        <div className="flex flex-col gap-0.5">
+          <p className="text-xs text-surface-400">{cfg.label}</p>
+          {device.telemetryDetails && isOn && (
+            <p className="text-[10px] text-surface-400 mt-0.5">
+              {device.telemetryDetails.tensao?.toFixed(1)}V • {device.telemetryDetails.corrente?.toFixed(2)}A • PF: {device.telemetryDetails.pf}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Footer: power/status + toggle */}
@@ -91,8 +98,12 @@ export function DeviceCard({ device }: { device: PropertyDevice }) {
           </span>
         )}
         <button
-          onClick={() => setIsOn(v => !v)}
-          title="Controle via MQTT (em breve)"
+          onClick={() => {
+            const nextState = !isOn;
+            setIsOn(nextState);
+            onToggle?.(device.id, nextState ? "ON" : "OFF");
+          }}
+          title="Controle via MQTT"
           className="focus:outline-none active:scale-95 transition-transform"
         >
           <ToggleSwitch isOn={isOn} />
@@ -111,15 +122,19 @@ interface EnergyChartProps {
   activeSession: ActiveSession | null;
   hasActiveSession: boolean;
   totalPowerWatts: number;
+  chartData: ChartPoint[];
 }
 
 export function EnergyChartSection({
-  devices, activeSession, hasActiveSession, totalPowerWatts,
+  devices, activeSession, hasActiveSession, totalPowerWatts, chartData
 }: EnergyChartProps) {
   const [selectedId, setSelectedId] = useState<"all" | number>("all");
 
-  // Sem leituras reais ainda — gráfico vazio
-  const chartData: ChartPoint[] = [];
+  // Filtra dados do gráfico se um dispositivo específico estiver selecionado
+  const filteredChartData = selectedId === "all" 
+    ? chartData 
+    : chartData.filter(pt => (pt as any).deviceId === selectedId || !(pt as any).deviceId); // fallback
+
 
   // Estima energia consumida na sessão
   const elapsedMs = activeSession?.startedAt
@@ -225,7 +240,7 @@ export function EnergyChartSection({
       <div className="relative px-6 py-5">
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+            <AreaChart data={filteredChartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
               <defs>
                 <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.25} />
@@ -237,7 +252,7 @@ export function EnergyChartSection({
               <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} unit="W" />
               <Tooltip
                 contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
-                formatter={(v: number) => [`${v} W`, "Consumo"]}
+                formatter={(v: any) => [`${v} W`, "Consumo"]}
               />
               <Area type="monotone" dataKey="watts" stroke="#6366f1" strokeWidth={2} fill="url(#energyGradient)" dot={false} />
             </AreaChart>
@@ -245,8 +260,8 @@ export function EnergyChartSection({
         </div>
 
         {/* Empty state overlay */}
-        {chartData.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl">
+        {filteredChartData.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl backdrop-blur-sm bg-white/50">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-100">
               <Zap className="h-5 w-5 text-surface-400" />
             </div>

@@ -13,7 +13,8 @@ import type { Property } from "@/types/property";
 import type { RentalPackage } from "@/types/rental-package";
 import { cn } from "@/lib/utils";
 import { QRCodeCard } from "../../../components/properties/qr-code-card";
-import { DeviceCard, EnergyChartSection } from "../../../components/properties/property-detail-components";
+import { DeviceCard, EnergyChartSection, ChartPoint } from "../../../components/properties/property-detail-components";
+import { io, Socket } from "socket.io-client";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const statusConfig = {
@@ -59,6 +60,10 @@ export default function PropertyDetailPage() {
   const [packages, setPackages] = useState<RentalPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Realtime state
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     if (!userId || !params.id) return;
@@ -71,6 +76,38 @@ export default function PropertyDetailPage() {
       .then(([prop, pkgs]) => { setProperty(prop); setPackages(pkgs); })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Erro ao carregar."))
       .finally(() => setIsLoading(false));
+      
+    // Conecta ao WebSocket
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const socketIo = io(apiUrl);
+    setSocket(socketIo);
+
+    socketIo.on("connect", () => {
+      console.log("WebSocket conectado:", socketIo.id);
+    });
+
+    socketIo.on("telemetry_update", (data: { deviceId: number, value: number, createdAt: string, details?: any }) => {
+      // Adiciona ponto no gráfico
+      const timeLabel = new Date(data.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      setChartData(prev => {
+        const newData = [...prev, { time: timeLabel, watts: data.value, deviceId: data.deviceId } as any];
+        if (newData.length > 50) return newData.slice(newData.length - 50);
+        return newData;
+      });
+
+      // Atualiza potência do dispositivo no estado da propriedade
+      setProperty(prev => {
+        if (!prev) return prev;
+        const newDevices = prev.devices.map(d => 
+          d.id === data.deviceId ? { ...d, powerWatts: data.value, isActive: true, telemetryDetails: data.details } as any : d
+        );
+        return { ...prev, devices: newDevices };
+      });
+    });
+
+    return () => {
+      socketIo.disconnect();
+    };
   }, [userId, params.id]);
 
   if (isLoading) return <PageSkeleton />;
@@ -211,6 +248,7 @@ export default function PropertyDetailPage() {
           activeSession={activeSession}
           hasActiveSession={hasActiveSession}
           totalPowerWatts={totalPowerWatts}
+          chartData={chartData}
         />
 
         {/* DEVICE GRID */}
@@ -230,7 +268,13 @@ export default function PropertyDetailPage() {
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
               {devices.map(device => (
-                <DeviceCard key={device.id} device={device} />
+                <DeviceCard 
+                  key={device.id} 
+                  device={device} 
+                  onToggle={(deviceId, action) => {
+                    if (socket) socket.emit("device:control", { deviceId, action });
+                  }}
+                />
               ))}
             </div>
           )}
