@@ -86,10 +86,28 @@ export class DevicesService {
       }),
       this.prisma.device.update({
         where: { id: deviceId },
-        data: { isActive: true, lastSeen: new Date() },
+        data: { isActive: true, lastSeen: new Date(), powerWatts: value },
       }),
     ]);
 
     return reading;
+  }
+
+  /**
+   * Busca todos os dispositivos que possuem um tópico de medição configurado.
+   */
+  findAllWithMeasurementTopic() {
+    return this.prisma.device.findMany({
+      where: { measurementMqttTopic: { not: null } }
+    });
+  }
+
+  /**
+   * Encontra o dispositivo associado a um tópico específico.
+   */
+  findByMeasurementTopic(topic: string) {
+    return this.prisma.device.findFirst({
+      where: { measurementMqttTopic: topic }
+    });
   }
 }

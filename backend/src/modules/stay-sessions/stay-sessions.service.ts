@@ -269,7 +269,9 @@ export class StaySessionsService {
 
     // 5. Publica comandos MQTT para ligar dispositivos permitidos
     for (const device of allowedDevices) {
-      await this.mqtt.publishCommand(property.id, device.id, 'ON');
+      if (device.commandMqttTopic) {
+        await this.mqtt.publishCommand(device.commandMqttTopic, 'ON');
+      }
     }
 
     return this.findOne(session.id);
