@@ -16,7 +16,6 @@ export default function PropertiesPage() {
   useEffect(() => {
     if (!userId) return;
 
-    setIsLoading(true);
     getProperties(userId)
       .then(setProperties)
       .catch((err: unknown) =>

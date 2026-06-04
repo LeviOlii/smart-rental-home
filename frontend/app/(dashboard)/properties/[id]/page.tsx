@@ -12,7 +12,6 @@ import {
   Wrench,
   Zap,
   ZapOff,
-  AlertTriangle,
   Thermometer,
   Lightbulb,
   Lock,
@@ -26,7 +25,6 @@ import { getProperty, getPackages } from "@/lib/api";
 import type { Property } from "@/types/property";
 import type { PropertyDevice } from "@/types/property";
 import type { RentalPackage } from "@/types/rental-package";
-import type { DeviceCategory } from "@/types/device";
 import { cn } from "@/lib/utils";
 import { QRCodeCard } from "../../../components/properties/qr-code-card";
 
@@ -119,12 +117,12 @@ export default function PropertyDetailPage() {
     if (!userId || !params.id) return;
     const id = parseInt(params.id, 10);
     if (isNaN(id)) {
+  setTimeout(() => {
       setError("ID de propriedade inválido.");
       setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
+    }, 0);
+    return;
+  }
 
     // Busca propriedade e pacotes em paralelo
     Promise.all([
@@ -250,7 +248,7 @@ export default function PropertyDetailPage() {
               </div>
               {property.address && (
                 <p className="mt-0.5 text-sm text-text-secondary flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
                   {property.address}
                 </p>
               )}
@@ -318,7 +316,7 @@ export default function PropertyDetailPage() {
         {/* Active session info */}
         {hasActiveSession && activeSession && (
           <div className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4">
-            <Activity className="h-5 w-5 flex-shrink-0 text-brand-500" />
+            <Activity className="h-5 w-5 shrink-0 text-brand-500" />
             <div>
               <p className="text-sm font-medium text-brand-700">
                 Estadia em andamento — {activeSession.clientName}
@@ -383,7 +381,7 @@ export default function PropertyDetailPage() {
                           {/* Category icon */}
                           <div
                             className={cn(
-                              "mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl",
+                              "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
                               catConfig.bgClassName
                             )}
                           >

@@ -40,7 +40,7 @@ const packageVisualConfig: Record<
   },
 };
 
-const deviceCategoryLabels: Record<DeviceCategory, string> = {
+const deviceCategoryLabels: Record<string, string> = {
   circuit_breaker: "Energia básica",
   lighting: "Iluminação",
   air_conditioner: "Ar-condicionado",
@@ -108,7 +108,7 @@ export function QRCodeCard({ pkg }: QRCodeCardProps) {
       )}
     >
       {/* Header gradient */}
-      <div className={cn("flex items-center justify-between px-5 py-4 bg-gradient-to-r", visual.gradient)}>
+      <div className={cn("flex items-center justify-between px-5 py-4 bg-linear-to-r", visual.gradient)}>
         <div className="flex items-center gap-2">
           <span className="text-xl">{visual.icon}</span>
           <div>
@@ -156,7 +156,7 @@ export function QRCodeCard({ pkg }: QRCodeCardProps) {
           <ul className="space-y-1">
             {pkg.allowedDeviceCategories.map((cat) => (
               <li key={cat} className="flex items-center gap-2 text-xs text-surface-700">
-                <Zap className="h-3 w-3 flex-shrink-0 text-brand-400" />
+                <Zap className="h-3 w-3 shrink-0 text-brand-400" />
                 {deviceCategoryLabels[cat as keyof typeof deviceCategoryLabels] ?? cat}
               </li>
             ))}

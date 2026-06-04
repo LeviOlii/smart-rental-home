@@ -41,8 +41,8 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen w-full overflow-hidden bg-surface-900">
       {/* Gradient blobs decorativos */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-48 -left-48 h-[500px] w-[500px] rounded-full bg-brand-500/20 blur-3xl" />
-        <div className="absolute -bottom-48 -right-48 h-[500px] w-[500px] rounded-full bg-brand-700/20 blur-3xl" />
+        <div className="absolute -top-48 -left-48 h-125 w-125 rounded-full bg-brand-500/20 blur-3xl" />
+        <div className="absolute -bottom-48 -right-48 h-125 w-125 rounded-full bg-brand-700/20 blur-3xl" />
         <div className="absolute top-1/2 left-1/3 h-72 w-72 -translate-y-1/2 rounded-full bg-brand-400/10 blur-3xl" />
       </div>
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
       </div>
 
       {/* Painel direito — formulário */}
-      <div className="relative z-10 flex w-full items-center justify-center px-6 py-12 lg:w-[480px] lg:flex-shrink-0">
+      <div className="relative z-10 flex w-full items-center justify-center px-6 py-12 lg:w-120 lg:shrink-0">
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-white/10 bg-surface-800/80 p-8 shadow-2xl backdrop-blur-xl">
 
@@ -114,7 +114,7 @@ export default function LoginPage() {
             {/* Erro de credenciais */}
             {loginErrorMessage && (
               <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                <div className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-400" />
+                <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400" />
                 {loginErrorMessage}
               </div>
             )}

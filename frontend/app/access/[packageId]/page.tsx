@@ -42,9 +42,10 @@ export default function AccessPage() {
   useEffect(() => {
     const id = parseInt(params.packageId, 10);
     if (isNaN(id)) {
-      setStep("not_found");
+      setTimeout(() => setStep("not_found"), 0);
       return;
     }
+
 
     getPackage(id)
       .then((data) => {
@@ -143,7 +144,7 @@ export default function AccessPage() {
   return (
     <div className="min-h-screen bg-surface-50">
       {/* Header decorativo */}
-      <div className={`bg-gradient-to-br ${theme.gradient} px-6 pb-16 pt-12 text-center`}>
+      <div className={`bg-linear-to-br ${theme.gradient} px-6 pb-16 pt-12 text-center`}>
         <span className="text-5xl">{theme.icon}</span>
         <h1 className="mt-4 text-3xl font-bold text-white">Pacote {pkg.name}</h1>
         <div className="mt-4 inline-flex items-baseline gap-1">

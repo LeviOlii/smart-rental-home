@@ -48,7 +48,7 @@ export function AppSidebar() {
     currentPathname.startsWith(href);
 
   return (
-    <aside className="flex h-full w-[260px] flex-shrink-0 flex-col bg-surface-900 text-text-inverse">
+    <aside className="flex h-full w-65 shrink-0 flex-col bg-surface-900 text-text-inverse">
       {/* Logo / Brand */}
       <div className="flex items-center gap-3 px-6 py-6 border-b border-surface-700">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500">
@@ -85,7 +85,7 @@ export function AppSidebar() {
                 >
                   <IconComponent
                     className={cn(
-                      "h-4 w-4 flex-shrink-0 transition-colors",
+                      "h-4 w-4 shrink-0 transition-colors",
                       isActive
                         ? "text-white"
                         : "text-surface-400 group-hover:text-brand-400"
@@ -101,7 +101,7 @@ export function AppSidebar() {
                   className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-surface-600"
                   title="Em breve"
                 >
-                  <IconComponent className="h-4 w-4 flex-shrink-0 text-surface-700" />
+                  <IconComponent className="h-4 w-4 shrink-0 text-surface-700" />
                   {item.label}
                   <span className="ml-auto rounded-full bg-surface-800 px-1.5 py-0.5 text-[10px] font-medium text-surface-500">
                     Em breve
@@ -116,7 +116,7 @@ export function AppSidebar() {
       {/* User info + Logout */}
       <div className="border-t border-surface-700 px-3 py-4">
         <div className="mb-3 flex items-center gap-3 rounded-lg bg-surface-800 px-3 py-2.5">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
             {authenticatedUser?.avatarInitials ?? "??"}
           </div>
           <div className="min-w-0 flex-1">
@@ -132,7 +132,7 @@ export function AppSidebar() {
           onClick={logout}
           className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-surface-400 transition-all duration-200 hover:bg-red-500/10 hover:text-red-400"
         >
-          <LogOut className="h-4 w-4 flex-shrink-0 transition-colors group-hover:text-red-400" />
+          <LogOut className="h-4 w-4 shrink-0 transition-colors group-hover:text-red-400" />
           Sair da conta
         </button>
       </div>

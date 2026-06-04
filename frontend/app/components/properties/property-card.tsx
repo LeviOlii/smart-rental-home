@@ -72,14 +72,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
             rel="noopener noreferrer"
             className="flex items-start gap-2 text-sm group/addr hover:text-brand-600 transition-colors duration-200"
           >
-            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-surface-400 group-hover/addr:text-brand-500 transition-colors duration-200" />
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-surface-400 group-hover/addr:text-brand-500 transition-colors duration-200" />
             <p className="font-medium text-surface-700 group-hover/addr:text-brand-700 transition-colors duration-200 underline-offset-2 group-hover/addr:underline">
               {property.address}
             </p>
           </a>
         ) : (
           <p className="flex items-center gap-2 text-sm text-surface-400">
-            <MapPin className="h-4 w-4 flex-shrink-0" />
+            <MapPin className="h-4 w-4 shrink-0" />
             Endereço não informado
           </p>
         )}
