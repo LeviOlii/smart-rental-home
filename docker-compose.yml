@@ -1,8 +1,7 @@
-version: "3.9"
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:16
     container_name: smart-rental-home-postgres
     restart: always
 

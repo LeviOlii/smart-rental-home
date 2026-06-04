@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         Int        @id @default(autoincrement())
+  name       String
+  email      String     @unique
+  password   String
+  createdAt  DateTime   @default(now())
+  properties Property[]
+}
+
+model Property {
+  id        Int             @id @default(autoincrement())
+  name      String
+  address   String?
+  createdAt DateTime        @default(now())
+  userId    Int
+  status    PropertyStatus  @default(AVAILABLE)
+  devices   Device[]
+  user      User            @relation(fields: [userId], references: [id])
+  packages  RentalPackage[]
+  sessions  StaySession[]
+}
+
+model Device {
+  id                   Int                 @id @default(autoincrement())
+  name                 String
+  type                 String
+  commandMqttTopic     String?             @unique(map: "Device_topic_key")
+  createdAt            DateTime            @default(now())
+  isActive             Boolean             @default(false)
+  lastSeen             DateTime?
+  propertyId           Int
+  powerWatts           Float?
+  measurementMqttTopic String?             @unique
+  property             Property            @relation(fields: [propertyId], references: [id])
+  readings             DeviceReading[]
+  sessions             StaySessionDevice[]
+}
+
+model DeviceReading {
+  id        BigInt   @id @default(autoincrement())
+  value     Float
+  createdAt DateTime @default(now())
+  deviceId  Int
+  device    Device   @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId, createdAt])
+}
+
+model RentalPackage {
+  id                      Int           @id @default(autoincrement())
+  name                    String
+  basePrice               Float
+  durationDays            Int?
+  durationHours           Int?
+  energyLimitKwh          Float?
+  pricePerExtraKwh        Float?
+  maxDevicesActive        Int?
+  createdAt               DateTime      @default(now())
+  propertyId              Int
+  allowedDeviceCategories String[]
+  property                Property      @relation(fields: [propertyId], references: [id])
+  sessions                StaySession[]
+}
+
+model StaySession {
+  id                     Int                 @id @default(autoincrement())
+  clientName             String
+  checkinAt              DateTime
+  checkoutAt             DateTime
+  startedAt              DateTime?
+  endedAt                DateTime?
+  status                 SessionStatus       @default(SCHEDULED)
+  totalConsumptionKwh    Float               @default(0)
+  extraConsumptionKwh    Float               @default(0)
+  extraCost              Float               @default(0)
+  createdAt              DateTime            @default(now())
+  propertyId             Int
+  packageId              Int?
+  customEnergyLimitKwh   Float?
+  customPricePerExtraKwh Float?
+  package                RentalPackage?      @relation(fields: [packageId], references: [id])
+  property               Property            @relation(fields: [propertyId], references: [id])
+  devices                StaySessionDevice[]
+}
+
+model StaySessionDevice {
+  id        Int         @id @default(autoincrement())
+  isAllowed Boolean     @default(true)
+  sessionId Int
+  deviceId  Int
+  device    Device      @relation(fields: [deviceId], references: [id])
+  session   StaySession @relation(fields: [sessionId], references: [id])
+
+  @@unique([sessionId, deviceId])
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  OCCUPIED
+  INACTIVE
+}
+
+enum SessionStatus {
+  SCHEDULED
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
