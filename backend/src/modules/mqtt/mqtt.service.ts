@@ -31,27 +31,32 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     this.client.on('connect', async () => {
       this.logger.log('MqttService: Conectado com sucesso ao broker.');
       
-      // Busca tópicos de medição no banco
-      const devices = await this.devicesService.findAllWithMeasurementTopic();
+      // Busca todos os tópicos no banco
+      const devices = await this.devicesService.findAllWithTopics();
       
       if (devices.length === 0) {
-        this.logger.warn('Nenhum tópico de medição encontrado no banco.');
+        this.logger.warn('Nenhum tópico encontrado no banco.');
       }
 
       for (const device of devices) {
         if (device.measurementMqttTopic) {
           this.client.subscribe(device.measurementMqttTopic, (err) => {
             if (!err) {
-              this.logger.log(`Inscrito no tópico de energia: ${device.measurementMqttTopic}`);
-            } else {
-              this.logger.error(`Erro ao inscrever no tópico: ${device.measurementMqttTopic}`, err);
+              this.logger.log(`Inscrito na medição: ${device.measurementMqttTopic}`);
+            }
+          });
+        }
+        if (device.commandMqttTopic) {
+          this.client.subscribe(device.commandMqttTopic, (err) => {
+            if (!err) {
+              this.logger.log(`Inscrito no comando: ${device.commandMqttTopic}`);
             }
           });
         }
       }
     });
 
-    this.client.on('message', this.handleTelemetryMessage.bind(this));
+    this.client.on('message', this.handleMessage.bind(this));
     
     this.client.on('error', (err) => {
       this.logger.error('Erro na conexão MQTT', err);
@@ -65,9 +70,32 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async handleTelemetryMessage(topic: string, payload: Buffer) {
+  async handleMessage(topic: string, payload: Buffer) {
     try {
       const payloadString = payload.toString().trim();
+
+      // 1. Tenta tratar como tópico de Comando (Estado)
+      const commandDevice = await this.devicesService.findByCommandTopic(topic);
+      if (commandDevice) {
+        if (payloadString === 'ON' || payloadString === 'OFF') {
+          const isActive = payloadString === 'ON';
+          await this.devicesService.updateDeviceStatus(commandDevice.id, isActive);
+          this.logger.debug(`Status MQTT atualizado [${topic}]: ${payloadString}`);
+          
+          if (this.onTelemetryCallback) {
+            // Reutilizamos a callback mas indicando que é só mudança de estado
+            this.onTelemetryCallback({
+              deviceId: commandDevice.id,
+              isActive,
+              isStateUpdate: true
+            });
+          }
+        }
+        // Retorna independente se a payload era ON/OFF, pois já sabemos que o tópico era de comando.
+        return;
+      }
+
+      // 2. Tenta tratar como tópico de Medição (Telemetria)
       let value = 0;
       let details = null;
 
@@ -87,15 +115,15 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.debug(`Telemetria MQTT [${topic}]: ${value} W`);
       
-      const device = await this.devicesService.findByMeasurementTopic(topic);
-      if (!device) return;
+      const measurementDevice = await this.devicesService.findByMeasurementTopic(topic);
+      if (!measurementDevice) return;
 
-      const reading = await this.devicesService.saveTelemetryReading(device.id, value);
+      const reading = await this.devicesService.saveTelemetryReading(measurementDevice.id, value);
 
       // Emite pro WebSocket para empurrar pro Frontend
       if (this.onTelemetryCallback) {
         this.onTelemetryCallback({ 
-          deviceId: device.id, 
+          deviceId: measurementDevice.id, 
           value, 
           createdAt: reading.createdAt,
           details

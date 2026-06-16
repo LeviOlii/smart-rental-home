@@ -94,20 +94,44 @@ export class DevicesService {
   }
 
   /**
-   * Busca todos os dispositivos que possuem um tópico de medição configurado.
+   * Busca todos os dispositivos que possuem tópicos configurados.
    */
-  findAllWithMeasurementTopic() {
+  findAllWithTopics() {
     return this.prisma.device.findMany({
-      where: { measurementMqttTopic: { not: null } }
+      where: {
+        OR: [
+          { measurementMqttTopic: { not: null } },
+          { commandMqttTopic: { not: null } }
+        ]
+      }
     });
   }
 
   /**
-   * Encontra o dispositivo associado a um tópico específico.
+   * Encontra o dispositivo associado a um tópico de medição específico.
    */
   findByMeasurementTopic(topic: string) {
     return this.prisma.device.findFirst({
       where: { measurementMqttTopic: topic }
+    });
+  }
+
+  /**
+   * Encontra o dispositivo associado a um tópico de comando específico.
+   */
+  findByCommandTopic(topic: string) {
+    return this.prisma.device.findFirst({
+      where: { commandMqttTopic: topic }
+    });
+  }
+
+  /**
+   * Atualiza o status ativo/inativo do dispositivo no banco.
+   */
+  async updateDeviceStatus(id: number, isActive: boolean) {
+    return this.prisma.device.update({
+      where: { id },
+      data: { isActive, lastSeen: new Date() }
     });
   }
 }

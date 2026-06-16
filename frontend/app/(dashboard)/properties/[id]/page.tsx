@@ -86,9 +86,22 @@ export default function PropertyDetailPage() {
       console.log("WebSocket conectado:", socketIo.id);
     });
 
-    socketIo.on("telemetry_update", (data: { deviceId: number, value: number, createdAt: string, details?: any }) => {
-      // Adiciona ponto no gráfico
-      const timeLabel = new Date(data.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    socketIo.on("telemetry_update", (data: { deviceId: number, value?: number, createdAt?: string, details?: any, isStateUpdate?: boolean, isActive?: boolean }) => {
+      
+      // Se for apenas uma mudança de status (ex: usuário ligou pelo botão físico)
+      if (data.isStateUpdate) {
+        setProperty(prev => {
+          if (!prev) return prev;
+          const newDevices = prev.devices.map(d => 
+            d.id === data.deviceId ? { ...d, isActive: data.isActive } as any : d
+          );
+          return { ...prev, devices: newDevices };
+        });
+        return; // Retorna cedo para não tentar plotar gráfico vazio
+      }
+
+      // Se for telemetria (Consumo de energia em Watts)
+      const timeLabel = new Date(data.createdAt!).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       setChartData(prev => {
         const newData = [...prev, { time: timeLabel, watts: data.value, deviceId: data.deviceId } as any];
         if (newData.length > 50) return newData.slice(newData.length - 50);
