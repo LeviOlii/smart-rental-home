@@ -35,7 +35,7 @@ flowchart LR
         ESP[ESP32 / Sensores]
     end
     subgraph "Camada de Mensageria"
-        Broker[(Broker MQTT \n broker.iracema.xyz)]
+        Broker[(Broker MQTT \n)]
     end
     subgraph "Backend (NestJS)"
         API[Serviços REST / CRUD]
