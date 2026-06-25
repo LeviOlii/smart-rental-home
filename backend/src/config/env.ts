@@ -1,24 +1,23 @@
 /**
- * Carrega variáveis de ambiente da raiz do monorepo ANTES de qualquer módulo NestJS.
- * Deve ser importado como primeiro import em main.ts.
- *
- * Por que arquivo separado?
- * TypeScript hoista todos os `import` para o topo do arquivo compilado.
- * Se colocarmos dotenv.config() inline em main.ts, ele rodaria DEPOIS de
- * AppModule ser carregado — tarde demais para o PrismaService ler DATABASE_URL.
- * Com um arquivo separado, o require() roda de forma síncrona e completa
- * ANTES de qualquer outro módulo ser carregado.
+ * Carrega variáveis de ambiente antes de qualquer módulo NestJS.
+ * Em produção (Render, etc.), as variáveis são injetadas diretamente no ambiente
+ * e nenhum arquivo .env é necessário.
+ * Em desenvolvimento local, tenta carregar o .env da raiz do monorepo ou da pasta backend/.
  */
 
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 
-// __dirname em runtime: backend/dist/src/config/
-// Subindo 4 níveis chega em smart-rental-home/
-const rootEnvPath = path.resolve(__dirname, '..', '..', '..', '..', '.env');
-const result = dotenv.config({ path: rootEnvPath });
+// Em produção as variáveis já estão disponíveis via process.env.
+// O dotenv.config com { override: false } garante que não sobrescreve
+// variáveis já definidas no ambiente — seguro para produção e dev.
+const locations = [
+  path.resolve(__dirname, '..', '..', '..', '..', '.env'), // raiz monorepo (local: 4 níveis acima de dist/src/config)
+  path.resolve(__dirname, '..', '..', '..', '.env'),       // raiz monorepo (local: 3 níveis, caso estrutura mude)
+  path.resolve(process.cwd(), '.env'),                      // cwd (backend/)
+];
 
-if (result.error) {
-    // Fallback: tenta .env no cwd (caso rode diretamente de backend/)
-    dotenv.config();
+for (const envPath of locations) {
+  const result = dotenv.config({ path: envPath, override: false });
+  if (!result.error) break; // Para assim que encontrar um arquivo válido
 }
