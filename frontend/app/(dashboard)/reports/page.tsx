@@ -153,7 +153,7 @@ function PropertyCard({ summary, onClick }: { summary: PropertySummary; onClick:
 // ─── Property Detail Panel ────────────────────────────────────────────────────
 
 function PropertyDetail({ summary, onBack }: { summary: PropertySummary; onBack: () => void }) {
-  const [periodIdx, setPeriodIdx] = useState(1); // 1 = 7d, -1 = Custom
+  const [periodIdx, setPeriodIdx] = useState(2); // 2 = 30d, -1 = Custom
   const [dateRange, setDateRange] = useState<{ from: string; to: string }>(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
@@ -209,7 +209,7 @@ function PropertyDetail({ summary, onBack }: { summary: PropertySummary; onBack:
     return { avgKwhPerSession, avgKwhPerDay, estimatedCost, count: monthFinishedSessions.length };
   }, [monthFinishedSessions]);
 
-  // Filtra sessões que ocorrem dentro do período selecionado para o gráfico de barras e tabela
+  // Filtra sessões para o gráfico de barras (período selecionado, apenas FINISHED)
   const filteredSessions = useMemo(() => {
     if (!effectiveFrom || !effectiveTo) return [];
     const fromTime = new Date(effectiveFrom).getTime();
@@ -220,10 +220,16 @@ function PropertyDetail({ summary, onBack }: { summary: PropertySummary; onBack:
       .filter((s) => {
         const sessionStart = new Date(s.checkinAt).getTime();
         const sessionEnd = s.endedAt ? new Date(s.endedAt).getTime() : new Date().getTime();
-        return sessionStart <= toTime && sessionEnd >= fromTime; // Interseção de datas
+        return sessionStart <= toTime && sessionEnd >= fromTime;
       })
       .sort((a, b) => new Date(a.checkinAt).getTime() - new Date(b.checkinAt).getTime());
   }, [summary.sessions, effectiveFrom, effectiveTo]);
+
+  // Todas as sessões da propriedade para a tabela de histórico (sem filtro de período)
+  const allSessionsSorted = useMemo(() =>
+    [...summary.sessions].sort((a, b) => new Date(b.checkinAt).getTime() - new Date(a.checkinAt).getTime()),
+    [summary.sessions]
+  );
 
   // Dados do gráfico de barras: kWh por sessão (apenas do período)
   const barData = useMemo(() =>
@@ -470,11 +476,11 @@ function PropertyDetail({ summary, onBack }: { summary: PropertySummary; onBack:
         </div>
       )}
 
-      {/* Sessions table for this property */}
+      {/* Sessions table for this property — exibe TODAS as estadias */}
       <div className="rounded-2xl border border-surface-200 bg-white shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-surface-100 flex items-center justify-between">
           <p className="font-semibold text-text-primary">Histórico de Estadias</p>
-          <span className="text-xs text-surface-500">Filtrado pelo período selecionado</span>
+          <span className="text-xs text-surface-500">{allSessionsSorted.length} estadia{allSessionsSorted.length !== 1 ? "s" : ""} no total</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -486,14 +492,14 @@ function PropertyDetail({ summary, onBack }: { summary: PropertySummary; onBack:
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-100">
-              {filteredSessions.length === 0 ? (
+              {allSessionsSorted.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-surface-500">
-                    Nenhuma estadia encontrada no período selecionado.
+                    Nenhuma estadia registrada para esta propriedade.
                   </td>
                 </tr>
               ) : (
-                filteredSessions.map((s) => {
+                allSessionsSorted.map((s) => {
                   const start = s.startedAt ? new Date(s.startedAt) : new Date(s.checkinAt);
                   const end = s.endedAt ? new Date(s.endedAt) : new Date();
                   const days = Math.max((end.getTime() - start.getTime()) / (1000 * 3600 * 24), 0.5);
