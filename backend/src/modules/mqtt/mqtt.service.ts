@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { DevicesService } from '../devices/devices.service';
 import * as mqtt from 'mqtt';
 
@@ -141,6 +142,32 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       this.client.publish(topic, action, { qos: 1 });
     } else {
       this.logger.error('Cliente MQTT não está conectado para publicar.');
+    }
+  }
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  async handleDeviceTimeouts() {
+    // 12 segundos sem telemetria = offline
+    const staleDevices = await this.devicesService.findStaleDevices(12);
+    
+    if (staleDevices.length === 0) return;
+
+    for (const device of staleDevices) {
+      this.logger.warn(`Device ${device.name} (ID ${device.id}) offline por timeout MQTT (>12s).`);
+      
+      // Atualiza banco para inativo e zera consumo
+      await this.devicesService.updateDeviceStatus(device.id, false, 0);
+
+      // Dispara evento pro WebSocket zerar a interface instantaneamente
+      if (this.onTelemetryCallback) {
+        this.onTelemetryCallback({
+          deviceId: device.id,
+          value: 0,
+          createdAt: new Date().toISOString(),
+          isActive: false,
+          isStateUpdate: false // Emitimos como telemetria para garantir que a potência zere na UI
+        });
+      }
     }
   }
 }

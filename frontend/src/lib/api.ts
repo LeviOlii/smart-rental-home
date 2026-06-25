@@ -90,3 +90,17 @@ export async function startSessionFromPackage(packageId: number): Promise<unknow
     method: "POST",
   });
 }
+
+export async function getSessions(userId: number): Promise<import("@/types/stay-session").StaySession[]> {
+  return apiFetch(`/stay-sessions?userId=${userId}`);
+}
+
+export async function getSessionsByProperty(propertyId: number): Promise<import("@/types/stay-session").StaySession[]> {
+  return apiFetch(`/stay-sessions?propertyId=${propertyId}`);
+}
+
+export interface ReadingPoint { bucket: string; avgWatts: number; }
+
+export async function getPropertyReadings(propertyId: number, from: string, to: string): Promise<ReadingPoint[]> {
+  return apiFetch(`/device-readings?propertyId=${propertyId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+}

@@ -3,7 +3,9 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { MqttService } from '../mqtt/mqtt.service';
 import { CreateStaySessionDto } from './dto/create-stay-session.dto';
@@ -18,16 +20,58 @@ import { CreateStaySessionDto } from './dto/create-stay-session.dto';
  */
 @Injectable()
 export class StaySessionsService {
+  private readonly logger = new Logger(StaySessionsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mqtt: MqttService,
   ) {}
+
+  /**
+   * Cron job rodando a cada minuto.
+   * Procura sessões ativas cujo checkoutAt já passou.
+   * Encerra passando o checkoutAt como forcedEndedAt.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleAutoCheckout() {
+    const expiredSessions = await this.prisma.staySession.findMany({
+      where: {
+        status: 'ACTIVE',
+        checkoutAt: { lte: new Date() },
+      },
+    });
+
+    if (expiredSessions.length > 0) {
+      this.logger.log(`Encontradas ${expiredSessions.length} sessões expiradas. Iniciando auto-checkout...`);
+      for (const session of expiredSessions) {
+        try {
+          await this.end(session.id, session.checkoutAt);
+          this.logger.log(`Auto-checkout concluído para a sessão ${session.id} (Retroativo para: ${session.checkoutAt.toISOString()})`);
+        } catch (error) {
+          this.logger.error(`Erro no auto-checkout da sessão ${session.id}`, error);
+        }
+      }
+    }
+  }
 
   findAllByProperty(propertyId: number) {
     return this.prisma.staySession.findMany({
       where: { propertyId },
       include: {
         package: true,
+        property: true,
+        devices: { include: { device: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  findAllByUser(userId: number) {
+    return this.prisma.staySession.findMany({
+      where: { property: { userId } },
+      include: {
+        package: true,
+        property: { select: { id: true, name: true, address: true } },
         devices: { include: { device: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -120,7 +164,7 @@ export class StaySessionsService {
    * Calcula extraConsumptionKwh e extraCost se houver franquia de energia.
    * Muda o status da propriedade de volta para AVAILABLE.
    */
-  async end(id: number) {
+  async end(id: number, forcedEndedAt?: Date) {
     const session = await this.findOne(id);
 
     if (session.status !== 'ACTIVE') {
@@ -129,7 +173,7 @@ export class StaySessionsService {
       );
     }
 
-    const endedAt = new Date();
+    const endedAt = forcedEndedAt ?? new Date();
     const startedAt = session.startedAt ?? session.checkinAt;
 
     // Soma todas as leituras dos dispositivos da sessão no período ativo
@@ -170,6 +214,14 @@ export class StaySessionsService {
         data: { status: 'AVAILABLE' },
       }),
     ]);
+
+    // Corta a energia publicando comando OFF nos tópicos vinculados
+    const activeDevices = session.devices.filter(sd => sd.isAllowed).map(sd => sd.device);
+    for (const device of activeDevices) {
+      if (device.commandMqttTopic) {
+        await this.mqtt.publishCommand(device.commandMqttTopic, 'OFF');
+      }
+    }
 
     return this.findOne(id);
   }

@@ -13,6 +13,9 @@ export default function PropertiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+
   useEffect(() => {
     if (!userId) return;
 
@@ -28,6 +31,16 @@ export default function PropertiesPage() {
   const rentedCount = properties.filter((p) => p.status === "OCCUPIED").length;
   const maintenanceCount = properties.filter((p) => p.status === "INACTIVE").length;
   const totalDeviceCount = properties.reduce((acc, p) => acc + p._count.devices, 0);
+
+  const filteredProperties = properties.filter((p) => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.address && p.address.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "ALL" || p.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="flex h-full flex-col">
@@ -48,10 +61,6 @@ export default function PropertiesPage() {
                 </p>
               </div>
             </div>
-
-            <button className="flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-brand-500/20 transition-all duration-200 hover:bg-brand-600 hover:shadow-brand-600/30">
-              + Nova Propriedade
-            </button>
           </div>
 
           {/* Search bar + filter row */}
@@ -61,14 +70,25 @@ export default function PropertiesPage() {
               <input
                 type="search"
                 placeholder="Buscar propriedade..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-surface-200 bg-surface-50 py-2.5 pl-10 pr-4 text-sm text-text-primary placeholder-surface-400 outline-none transition-all focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15"
               />
             </div>
 
-            <button className="flex items-center gap-2 rounded-xl border border-surface-200 bg-surface-50 px-3.5 py-2.5 text-sm text-surface-600 transition-all hover:border-surface-300 hover:bg-surface-100">
-              <SlidersHorizontal className="h-4 w-4" />
-              Filtros
-            </button>
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="appearance-none cursor-pointer flex items-center gap-2 rounded-xl border border-surface-200 bg-surface-50 pl-3.5 pr-8 py-2.5 text-sm text-surface-600 transition-all hover:border-surface-300 hover:bg-surface-100 outline-none focus:ring-2 focus:ring-brand-500/15"
+              >
+                <option value="ALL">Todos os status</option>
+                <option value="AVAILABLE">Disponíveis</option>
+                <option value="OCCUPIED">Ocupadas</option>
+                <option value="INACTIVE">Inativas</option>
+              </select>
+              <SlidersHorizontal className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+            </div>
           </div>
         </div>
       </header>
@@ -80,29 +100,38 @@ export default function PropertiesPage() {
             {
               label: "Disponíveis",
               value: availableCount,
+              status: "AVAILABLE",
               colorClassName: "text-emerald-600",
               dotClassName: "bg-emerald-500",
             },
             {
               label: "Ocupadas",
               value: rentedCount,
+              status: "OCCUPIED",
               colorClassName: "text-brand-600",
               dotClassName: "bg-brand-500",
             },
             {
               label: "Inativas",
               value: maintenanceCount,
+              status: "INACTIVE",
               colorClassName: "text-amber-600",
               dotClassName: "bg-amber-400",
             },
           ].map((statusSummary) => (
-            <div key={statusSummary.label} className="flex items-center gap-2">
+            <button
+              key={statusSummary.label}
+              onClick={() => setStatusFilter(statusFilter === statusSummary.status ? "ALL" : statusSummary.status)}
+              className={`flex items-center gap-2 rounded-md px-2 py-1 transition-colors ${
+                statusFilter === statusSummary.status ? "bg-surface-100" : "hover:bg-surface-50"
+              }`}
+            >
               <div className={`h-2 w-2 rounded-full ${statusSummary.dotClassName}`} />
               <span className="text-xs text-surface-500">{statusSummary.label}:</span>
               <span className={`text-xs font-semibold ${statusSummary.colorClassName}`}>
                 {statusSummary.value}
               </span>
-            </div>
+            </button>
           ))}
 
           <div className="ml-auto text-xs text-surface-400">
@@ -127,14 +156,20 @@ export default function PropertiesPage() {
             <p className="text-sm font-medium text-red-700">{error}</p>
             <p className="text-xs text-red-500">Verifique se o backend está rodando em {process.env.NEXT_PUBLIC_API_URL}</p>
           </div>
-        ) : properties.length === 0 ? (
+        ) : filteredProperties.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-300 bg-white py-16 gap-3">
-            <Home className="h-10 w-10 text-surface-300" />
-            <p className="text-sm text-surface-500">Nenhuma propriedade cadastrada</p>
+            <Search className="h-10 w-10 text-surface-300" />
+            <p className="text-sm text-surface-500">Nenhuma propriedade encontrada para este filtro.</p>
+            <button 
+              onClick={() => { setSearchQuery(""); setStatusFilter("ALL"); }}
+              className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-700"
+            >
+              Limpar filtros
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {properties.map((property) => (
+            {filteredProperties.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))}
           </div>

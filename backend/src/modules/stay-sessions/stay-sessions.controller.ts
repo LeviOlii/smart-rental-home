@@ -7,6 +7,8 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  BadRequestException,
+  ParseIntPipe as PIP,
 } from '@nestjs/common';
 import { StaySessionsService } from './stay-sessions.service';
 import { CreateStaySessionDto } from './dto/create-stay-session.dto';
@@ -29,8 +31,17 @@ export class StaySessionsController {
   constructor(private readonly staySessionsService: StaySessionsService) {}
 
   @Get()
-  findAll(@Query('propertyId', ParseIntPipe) propertyId: number) {
-    return this.staySessionsService.findAllByProperty(propertyId);
+  findAll(
+    @Query('propertyId') propertyId?: string,
+    @Query('userId') userId?: string,
+  ) {
+    if (userId) {
+      return this.staySessionsService.findAllByUser(parseInt(userId, 10));
+    }
+    if (propertyId) {
+      return this.staySessionsService.findAllByProperty(parseInt(propertyId, 10));
+    }
+    throw new BadRequestException('Informe propertyId ou userId.');
   }
 
   @Get(':id')
