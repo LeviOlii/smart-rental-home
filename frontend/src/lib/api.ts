@@ -10,7 +10,7 @@ import type { Property } from "@/types/property";
 import type { Device } from "@/types/device";
 import type { RentalPackage } from "@/types/rental-package";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 

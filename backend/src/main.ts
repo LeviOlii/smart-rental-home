@@ -13,7 +13,7 @@ async function bootstrap() {
 
   // Habilita CORS para o frontend Next.js conseguir chamar o backend localmente
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: ['http://localhost:3000', process.env.NEXT_PUBLIC_API_URL],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
