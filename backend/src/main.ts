@@ -13,7 +13,7 @@ async function bootstrap() {
 
   // Habilita CORS para o frontend Next.js conseguir chamar o backend localmente
   app.enableCors({
-    origin: ['http://localhost:3000', process.env.NEXT_PUBLIC_API_URL],
+    origin: ['http://localhost:3000', 'https://smart-rental-home.vercel.app'],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
