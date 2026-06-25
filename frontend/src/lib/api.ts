@@ -10,7 +10,7 @@ import type { Property } from "@/types/property";
 import type { Device } from "@/types/device";
 import type { RentalPackage } from "@/types/rental-package";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -89,4 +89,18 @@ export async function startSessionFromPackage(packageId: number): Promise<unknow
   return apiFetch(`/stay-sessions/start-from-package/${packageId}`, {
     method: "POST",
   });
+}
+
+export async function getSessions(userId: number): Promise<import("@/types/stay-session").StaySession[]> {
+  return apiFetch(`/stay-sessions?userId=${userId}`);
+}
+
+export async function getSessionsByProperty(propertyId: number): Promise<import("@/types/stay-session").StaySession[]> {
+  return apiFetch(`/stay-sessions?propertyId=${propertyId}`);
+}
+
+export interface ReadingPoint { bucket: string; avgWatts: number; }
+
+export async function getPropertyReadings(propertyId: number, from: string, to: string): Promise<ReadingPoint[]> {
+  return apiFetch(`/device-readings?propertyId=${propertyId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
 }

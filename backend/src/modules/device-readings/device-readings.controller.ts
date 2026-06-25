@@ -6,6 +6,7 @@ import {
   Body,
   ParseIntPipe,
   ParseFloatPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { DeviceReadingsService } from './device-readings.service';
 
@@ -24,11 +25,26 @@ export class DeviceReadingsController {
 
   @Get()
   findHistory(
-    @Query('deviceId', ParseIntPipe) deviceId: number,
+    @Query('deviceId') deviceId?: string,
+    @Query('propertyId') propertyId?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
   ) {
-    return this.deviceReadingsService.findHistory(deviceId, from, to);
+    if (propertyId) {
+      return this.deviceReadingsService.findHistoryByProperty(
+        parseInt(propertyId, 10),
+        from,
+        to,
+      );
+    }
+    if (deviceId) {
+      return this.deviceReadingsService.findHistory(
+        parseInt(deviceId, 10),
+        from,
+        to,
+      );
+    }
+    throw new BadRequestException('Informe deviceId ou propertyId.');
   }
 
   @Get('latest')

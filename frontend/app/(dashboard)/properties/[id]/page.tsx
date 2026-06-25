@@ -144,8 +144,8 @@ export default function PropertyDetailPage() {
   const onlineDevices = devices.filter(d => d.isActive);
   const onlineCount = onlineDevices.length;
   const totalPowerWatts = onlineDevices.reduce((acc, d) => acc + (d.powerWatts ?? 0), 0);
-  const hasActiveSession = property.sessions.length > 0;
-  const activeSession = property.sessions[0] ?? null;
+  const activeSession = property.sessions.find(s => s.status === "ACTIVE" || s.status === "SCHEDULED") ?? null;
+  const hasActiveSession = !!activeSession;
 
   // Power bar color
   const powerLevel = totalPowerWatts > 4000 ? "red" : totalPowerWatts > 1500 ? "amber" : "emerald";

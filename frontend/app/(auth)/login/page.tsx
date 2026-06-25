@@ -61,19 +61,18 @@ export default function LoginPage() {
         {/* Hero */}
         <div className="space-y-6">
           <h1 className="text-5xl font-bold leading-tight text-white">
-            Gestão inteligente
+            Automação e cobrança
             <br />
-            <span className="text-brand-400">dos seus imóveis</span>
+            <span className="text-brand-400">via QR Code</span>
           </h1>
           <p className="max-w-sm text-lg leading-relaxed text-surface-400">
-            Monitore consumo de energia, gerencie dispositivos e acompanhe suas
-            propriedades em tempo real.
+            Venda pacotes de tempo, automatize a liberação de energia após o pagamento e evite desperdícios.
           </p>
           <div className="flex flex-wrap gap-2">
             {[
-              "Monitoramento em tempo real",
-              "Múltiplas propriedades",
-              "Relatórios detalhados",
+              "Check-in por QR Code",
+              "Corte automático de energia",
+              "Dashboard de custos operacionais",
             ].map((label) => (
               <span
                 key={label}
