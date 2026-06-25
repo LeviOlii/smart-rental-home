@@ -189,27 +189,16 @@ export default function AccessPage() {
           </div>
 
           {/* Detalhes */}
-          <div className="grid grid-cols-2 divide-x divide-surface-100 border-b border-surface-100">
+          <div className="border-b border-surface-100">
             <div className="flex items-center gap-2 px-5 py-4">
               <Clock className="h-4 w-4 text-surface-400" />
               <div>
-                <p className="text-xs text-surface-400">Duração</p>
+                <p className="text-xs text-surface-400">Duração do pacote</p>
                 <p className="text-sm font-semibold text-text-primary">
-                  {pkg.durationHours ?? 24}h
+                  {pkg.durationHours ?? 24} horas
                 </p>
               </div>
             </div>
-            {pkg.energyLimitKwh && (
-              <div className="flex items-center gap-2 px-5 py-4">
-                <Zap className="h-4 w-4 text-surface-400" />
-                <div>
-                  <p className="text-xs text-surface-400">Franquia</p>
-                  <p className="text-sm font-semibold text-text-primary">
-                    {pkg.energyLimitKwh} kWh
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Botão */}

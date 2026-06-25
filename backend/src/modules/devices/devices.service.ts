@@ -126,12 +126,29 @@ export class DevicesService {
   }
 
   /**
-   * Atualiza o status ativo/inativo do dispositivo no banco.
+   * Retorna dispositivos que estão ativos mas não se comunicam há um certo tempo.
    */
-  async updateDeviceStatus(id: number, isActive: boolean) {
+  findStaleDevices(timeoutSeconds: number) {
+    const threshold = new Date(Date.now() - timeoutSeconds * 1000);
+    return this.prisma.device.findMany({
+      where: {
+        isActive: true,
+        lastSeen: { lt: threshold },
+      },
+    });
+  }
+
+  /**
+   * Atualiza o status ativo/inativo do dispositivo no banco, e opcionalmente zera a potência.
+   */
+  async updateDeviceStatus(id: number, isActive: boolean, powerWatts?: number) {
     return this.prisma.device.update({
       where: { id },
-      data: { isActive, lastSeen: new Date() }
+      data: { 
+        isActive, 
+        lastSeen: new Date(),
+        ...(powerWatts !== undefined && { powerWatts }) 
+      }
     });
   }
 }

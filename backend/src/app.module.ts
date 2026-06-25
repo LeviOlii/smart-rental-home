@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 
 // Infraestrutura
 import { PrismaModule } from './modules/prisma/prisma.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Módulos de domínio
 import { AuthModule } from './modules/auth/auth.module';
@@ -21,6 +22,9 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
   imports: [
     // PrismaModule deve ser o primeiro — é global e base de tudo
     PrismaModule,
+    
+    // Tarefas agendadas
+    ScheduleModule.forRoot(),
 
     // Domínio
     AuthModule,

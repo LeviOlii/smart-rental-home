@@ -27,16 +27,10 @@ const navigationItems: NavigationItem[] = [
     isAvailable: true,
   },
   {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    isAvailable: false,
-  },
-  {
     label: "Relatórios",
     href: "/reports",
     icon: FileBarChart2,
-    isAvailable: false,
+    isAvailable: true,
   },
 ];
 
