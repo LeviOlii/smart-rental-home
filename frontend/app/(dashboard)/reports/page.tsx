@@ -424,14 +424,14 @@ function PropertyDetail({ summary, onBack }: { summary: PropertySummary; onBack:
                   axisLine={false}
                   tickLine={false}
                   interval="preserveStartEnd"
-                  tickFormatter={(ts: number) =>
+                  tickFormatter={(ts: any) =>
                     new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
                   }
                 />
                 <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} unit="W" />
                 <Tooltip
                   contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
-                  labelFormatter={(ts: number) =>
+                  labelFormatter={(ts: any) =>
                     new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
                   }
                   formatter={(v: any) => [`${v} W`, "Média"]}
